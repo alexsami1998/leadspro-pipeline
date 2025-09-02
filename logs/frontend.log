@@ -1,0 +1,37 @@
+Warning: Running a server with --disable-host-check is a security risk. See https://medium.com/webpack/webpack-dev-server-middleware-security-issues-1489d950874a for more information.
+The "disableHostCheck" option will not be used because it is not supported by the "@angular-devkit/build-angular:application" builder.
+❯ Building...
+✔ Building...
+Initial chunk files | Names                 |  Raw size
+polyfills.js        | polyfills             |  90.20 kB | 
+chunk-U3H4SKEO.js   | -                     |   5.79 kB | 
+main.js             | main                  |   4.74 kB | 
+chunk-Y5RQAIA6.js   | -                     |   1.50 kB | 
+styles.css          | styles                | 365 bytes | 
+
+                    | Initial total         | 102.59 kB
+
+Lazy chunk files    | Names                 |  Raw size
+chunk-57K3HVAN.js   | leads-component       |  76.12 kB | 
+chunk-ZO5LZQYL.js   | webhooks-component    |  58.71 kB | 
+chunk-H64PWFS6.js   | users-component       |  43.41 kB | 
+chunk-PRZHVPR5.js   | dashboard-component   |  21.61 kB | 
+chunk-DY6OTGEC.js   | shell-component       |  16.73 kB | 
+chunk-CJ64BAWU.js   | -                     |  14.12 kB | 
+chunk-RVIDI23Z.js   | login-component       |  12.05 kB | 
+chunk-QAIWZ66G.js   | -                     |   5.38 kB | 
+chunk-3TYJLZ4W.js   | lead-detail-component |   5.12 kB | 
+
+Application bundle generation complete. [3.442 seconds]
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  ➜  Local:   http://localhost:4200/
+  ➜  Network: http://192.168.0.144:4200/
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+
+No output file changes.
+
+Application bundle generation complete. [1.397 seconds]
+

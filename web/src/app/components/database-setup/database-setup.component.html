@@ -1,0 +1,184 @@
+<div class="database-setup-container">
+  <div class="setup-card">
+    <div class="setup-header">
+      <h2>🔧 Configuração do Banco de Dados</h2>
+      <p>Configure a conexão com o PostgreSQL para o sistema LeadPro</p>
+    </div>
+
+    <form class="setup-form" (ngSubmit)="initializeDatabase()">
+      <!-- Configurações Básicas -->
+      <div class="form-section">
+        <h3>Configurações de Conexão</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="host">Host</label>
+            <input
+              type="text"
+              id="host"
+              name="host"
+              [(ngModel)]="config.host"
+              placeholder="localhost"
+              required
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="port">Porta</label>
+            <input
+              type="number"
+              id="port"
+              name="port"
+              [(ngModel)]="config.port"
+              placeholder="5432"
+              min="1"
+              max="65535"
+              required
+              class="form-input"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="database">Nome do Banco</label>
+          <input
+            type="text"
+            id="database"
+            name="database"
+            [(ngModel)]="config.database"
+            placeholder="leadpro"
+            required
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="username">Usuário</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              [(ngModel)]="config.username"
+              placeholder="postgres"
+              required
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              [(ngModel)]="config.password"
+              placeholder="Digite a senha"
+              required
+              class="form-input"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Configurações Avançadas -->
+      <div class="form-section" *ngIf="showAdvanced">
+        <h3>Configurações Avançadas</h3>
+        <div class="form-group">
+          <label>String de Conexão</label>
+          <div class="connection-string">
+            <code>{{ getConnectionString() }}</code>
+            <button type="button" class="copy-button" (click)="navigator.clipboard.writeText(getConnectionString())">
+              📋 Copiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagens de Erro/Sucesso -->
+      <div class="message-container" *ngIf="errorMessage || successMessage">
+        <div class="error-message" *ngIf="errorMessage">
+          ❌ {{ errorMessage }}
+        </div>
+        <div class="success-message" *ngIf="successMessage">
+          ✅ {{ successMessage }}
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="useDefaultConfig()"
+          [disabled]="loading || testing"
+        >
+          🔄 Usar Configuração Padrão
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="toggleAdvanced()"
+          [disabled]="loading || testing"
+        >
+          {{ showAdvanced ? '🔽' : '🔼' }} Configurações Avançadas
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-test"
+          (click)="testConnection()"
+          [disabled]="loading || testing"
+        >
+          <span *ngIf="!testing">🔍 Testar Conexão</span>
+          <span *ngIf="testing" class="loading-spinner"></span>
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="loading || testing"
+        >
+          <span *ngIf="!loading">🚀 Inicializar Banco</span>
+          <span *ngIf="loading" class="loading-spinner"></span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Informações de Ajuda -->
+    <div class="help-section">
+      <h4>📚 Informações de Ajuda</h4>
+      <div class="help-content">
+        <div class="help-item">
+          <strong>Configuração Padrão:</strong>
+          <ul>
+            <li>Host: localhost</li>
+            <li>Porta: 5432</li>
+            <li>Banco: leadpro</li>
+            <li>Usuário: postgres</li>
+          </ul>
+        </div>
+        
+        <div class="help-item">
+          <strong>Requisitos:</strong>
+          <ul>
+            <li>PostgreSQL instalado e rodando</li>
+            <li>Banco de dados 'leadpro' criado</li>
+            <li>Usuário com permissões de criação de tabelas</li>
+          </ul>
+        </div>
+
+        <div class="help-item">
+          <strong>Comandos SQL para criar o banco:</strong>
+          <code>
+            CREATE DATABASE leadpro;<br>
+            CREATE USER leadpro_user WITH PASSWORD 'sua_senha';<br>
+            GRANT ALL PRIVILEGES ON DATABASE leadpro TO leadpro_user;
+          </code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

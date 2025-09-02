@@ -1,0 +1,370 @@
+<div class="leads-container">
+  <div class="leads-header">
+    <h1>Gestão de Leads</h1>
+    <p>Gerencie todos os leads do sistema</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Carregando leads...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="leads-content" *ngIf="!loading">
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <div class="search-filters">
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="Buscar leads..."
+            [(ngModel)]="searchTerm"
+            (input)="filterLeads()"
+            class="search-input"
+          />
+        </div>
+
+        <div class="filters">
+          <select [(ngModel)]="selectedStatus" (change)="filterLeads()" class="filter-select">
+            <option value="">Todos os Status</option>
+            <option *ngFor="let status of Object.values(LeadStatus)" [value]="status">
+              {{ getStatusLabel(status) }}
+            </option>
+          </select>
+
+          <select [(ngModel)]="selectedSource" (change)="filterLeads()" class="filter-select">
+            <option value="">Todas as Fontes</option>
+            <option *ngFor="let source of Object.values(LeadSource)" [value]="source">
+              {{ getSourceLabel(source) }}
+            </option>
+          </select>
+
+          <button (click)="clearFilters()" class="btn btn-outline">
+            🔄 Limpar Filtros
+          </button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button (click)="openCreateModal()" class="btn btn-primary" *ngIf="canEditLeads()">
+          ➕ Novo Lead
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+      <span>{{ filteredLeads.length }} lead(s) encontrado(s)</span>
+    </div>
+
+    <!-- Leads Grid -->
+    <div class="leads-grid" *ngIf="filteredLeads.length > 0">
+      <div class="lead-card" *ngFor="let lead of filteredLeads">
+        <div class="lead-header">
+          <div class="lead-avatar">
+            <span>{{ lead.nome.charAt(0) }}</span>
+          </div>
+          <div class="lead-info">
+            <h3>{{ lead.nome }}</h3>
+            <p class="lead-email">{{ lead.email }}</p>
+            <p class="lead-phone">{{ lead.telefone }}</p>
+          </div>
+          <div class="lead-actions">
+            <button (click)="openWhatsApp(lead)" class="btn-icon" title="Enviar WhatsApp">
+              📱
+            </button>
+            <button (click)="openEditModal(lead)" class="btn-icon" title="Editar" *ngIf="canEditLeads()">
+              ✏️
+            </button>
+            <button (click)="deleteLead(lead)" class="btn-icon btn-danger" title="Excluir" *ngIf="canDeleteLeads()">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div class="lead-details">
+          <div class="detail-row">
+            <span class="label">Empresa:</span>
+            <span class="value">{{ lead.empresa || 'Não informado' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Cargo:</span>
+            <span class="value">{{ lead.cargo || 'Não informado' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Fonte:</span>
+            <span class="value source-badge">{{ getSourceLabel(lead.fonte) }}</span>
+          </div>
+          <div class="detail-row" *ngIf="canViewContractValues()">
+            <span class="label">Valor:</span>
+            <span class="value">{{ formatCurrency(lead.valorContrato) }}</span>
+          </div>
+        </div>
+
+        <div class="lead-status">
+          <span class="status-badge" [style.background-color]="getStatusColor(lead.status)">
+            {{ getStatusLabel(lead.status) }}
+          </span>
+        </div>
+
+        <div class="lead-footer">
+          <div class="lead-date">
+            Criado em: {{ formatDate(lead.dataCriacao) }}
+          </div>
+          <div class="lead-actions-footer">
+            <button (click)="openInteractionModal(lead)" class="btn btn-sm">
+              💬 Interação
+            </button>
+                         <div class="status-actions" *ngIf="canEditLeads()">
+               <select (change)="onStatusChange($event, lead)" class="status-select">
+                 <option value="">Mudar Status</option>
+                 <option *ngFor="let status of Object.values(LeadStatus)" [value]="status">
+                   {{ getStatusLabel(status) }}
+                 </option>
+               </select>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredLeads.length === 0 && !loading">
+      <div class="empty-icon">📋</div>
+      <h3>Nenhum lead encontrado</h3>
+      <p>Não há leads que correspondam aos filtros aplicados.</p>
+      <button (click)="clearFilters()" class="btn btn-primary">
+        Limpar Filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Lead Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Novo Lead</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createLead()">
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" id="nome" [(ngModel)]="newLead.nome" name="nome" required class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email *</label>
+              <input type="email" id="email" [(ngModel)]="newLead.email" name="email" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="telefone">Telefone *</label>
+              <input type="text" id="telefone" [(ngModel)]="newLead.telefone" name="telefone" required class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empresa">Empresa</label>
+              <input type="text" id="empresa" [(ngModel)]="newLead.empresa" name="empresa" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="cargo">Cargo</label>
+              <input type="text" id="cargo" [(ngModel)]="newLead.cargo" name="cargo" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fonte">Fonte *</label>
+              <select id="fonte" [(ngModel)]="newLead.fonte" name="fonte" required class="form-input">
+                <option *ngFor="let source of Object.values(LeadSource)" [value]="source">
+                  {{ getSourceLabel(source) }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group" *ngIf="canViewContractValues()">
+              <label for="valorContrato">Valor do Contrato</label>
+              <input type="number" id="valorContrato" [(ngModel)]="newLead.valorContrato" name="valorContrato" step="0.01" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" [(ngModel)]="newLead.observacoes" name="observacoes" rows="3" class="form-input"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Criar Lead</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Lead Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModals()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Editar Lead</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      
+      <!-- Tabs Navigation -->
+      <div class="modal-tabs">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'details'"
+          (click)="activeTab = 'details'"
+        >
+          📝 Detalhes
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'interactions'"
+          (click)="activeTab = 'interactions'"
+        >
+          💬 Interações ({{ leadInteractions.length }})
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="modal-body">
+        <!-- Details Tab -->
+        <div class="tab-content" *ngIf="activeTab === 'details' && editLead">
+          <form (ngSubmit)="updateLead()">
+            <div class="form-group">
+              <label for="edit-nome">Nome *</label>
+              <input type="text" id="edit-nome" [(ngModel)]="editLead.nome" name="nome" required class="form-input">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-email">Email *</label>
+                <input type="email" id="edit-email" [(ngModel)]="editLead.email" name="email" required class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="edit-telefone">Telefone *</label>
+                <input type="text" id="edit-telefone" [(ngModel)]="editLead.telefone" name="telefone" required class="form-input">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-empresa">Empresa</label>
+                <input type="text" id="edit-empresa" [(ngModel)]="editLead.empresa" name="empresa" class="form-input">
+              </div>
+              <div class="form-group">
+                <label for="edit-cargo">Cargo</label>
+                <input type="text" id="edit-cargo" [(ngModel)]="editLead.cargo" name="cargo" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="edit-fonte">Fonte *</label>
+                <select id="edit-fonte" [(ngModel)]="editLead.fonte" name="fonte" required class="form-input">
+                  <option *ngFor="let source of Object.values(LeadSource)" [value]="source">
+                    {{ getSourceLabel(source) }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-status">Status *</label>
+                <select id="edit-status" [(ngModel)]="editLead.status" name="status" required class="form-input">
+                  <option *ngFor="let status of Object.values(LeadStatus)" [value]="status">
+                    {{ getStatusLabel(status) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" *ngIf="canViewContractValues()">
+                <label for="edit-valorContrato">Valor do Contrato</label>
+                <input type="number" id="edit-valorContrato" [(ngModel)]="editLead.valorContrato" name="valorContrato" step="0.01" class="form-input">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-observacoes">Observações</label>
+              <textarea id="edit-observacoes" [(ngModel)]="editLead.observacoes" name="observacoes" rows="3" class="form-input"></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Atualizar Lead</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Interactions Tab -->
+        <div class="tab-content" *ngIf="activeTab === 'interactions' && editLead">
+          <div class="interactions-header">
+            <h3>Histórico de Interações</h3>
+            <button (click)="openInteractionModal(editLead!)" class="btn btn-primary btn-sm" *ngIf="editLead">
+              ➕ Nova Interação
+            </button>
+          </div>
+
+          <div class="interactions-list" *ngIf="leadInteractions.length > 0">
+            <div class="interaction-item" *ngFor="let interaction of leadInteractions">
+              <div class="interaction-header">
+                <span class="interaction-type">{{ getInteractionTypeLabel(interaction.tipo) }}</span>
+                <span class="interaction-date">{{ formatDate(interaction.dataCriacao) }}</span>
+              </div>
+              <div class="interaction-content">
+                {{ interaction.conteudo }}
+              </div>
+              <div class="interaction-user">
+                Por: {{ interaction.usuarioCriacao }}
+              </div>
+            </div>
+          </div>
+
+          <div class="empty-interactions" *ngIf="leadInteractions.length === 0">
+            <p>Nenhuma interação registrada para este lead.</p>
+            <button (click)="openInteractionModal(editLead!)" class="btn btn-primary" *ngIf="editLead">
+              Registrar Primeira Interação
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interaction Modal -->
+  <div class="modal-overlay" *ngIf="showInteractionModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Nova Interação</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="addInteraction()">
+          <div class="form-group">
+            <label for="interaction-tipo">Tipo de Interação *</label>
+            <select id="interaction-tipo" [(ngModel)]="newInteraction.tipo" name="tipo" required class="form-input">
+              <option *ngFor="let tipo of Object.values(InteractionType)" [value]="tipo">
+                {{ tipo.replace('_', ' ').toLowerCase() }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="interaction-conteudo">Conteúdo *</label>
+            <textarea id="interaction-conteudo" [(ngModel)]="newInteraction.conteudo" name="conteudo" rows="4" required class="form-input" placeholder="Descreva a interação realizada..."></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Registrar Interação</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

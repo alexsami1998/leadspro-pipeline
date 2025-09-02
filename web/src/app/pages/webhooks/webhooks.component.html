@@ -1,0 +1,271 @@
+<div class="webhooks-container">
+  <div class="webhooks-header">
+    <h1>Gestão de Webhooks</h1>
+    <p>Configure webhooks para integração com n8n e outros sistemas</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Carregando webhooks...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="webhooks-content" *ngIf="!loading">
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <div class="search-filters">
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="Buscar webhooks..."
+            [(ngModel)]="searchTerm"
+            (input)="filterWebhooks()"
+            class="search-input"
+          />
+        </div>
+
+        <div class="filters">
+          <button (click)="clearFilters()" class="btn btn-outline">
+            🔄 Limpar Filtros
+          </button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button (click)="openCreateModal()" class="btn btn-primary" *ngIf="canManageWebhooks()">
+          ➕ Novo Webhook
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+      <span>{{ filteredWebhooks.length }} webhook(s) encontrado(s)</span>
+    </div>
+
+    <!-- Webhooks Grid -->
+    <div class="webhooks-grid" *ngIf="filteredWebhooks.length > 0">
+      <div class="webhook-card" *ngFor="let webhook of filteredWebhooks">
+        <div class="webhook-header">
+          <div class="webhook-icon">
+            🔗
+          </div>
+          <div class="webhook-info">
+            <h3>{{ webhook.nome }}</h3>
+            <p class="webhook-url">{{ webhook.url }}</p>
+            <div class="webhook-status">
+              <span class="status-badge" [class.active]="webhook.ativo" [class.inactive]="!webhook.ativo">
+                {{ webhook.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </div>
+          </div>
+          <div class="webhook-actions">
+            <button (click)="openConfigModal(webhook)" class="btn-icon" title="Configurar Eventos">
+              ⚙️
+            </button>
+            <button (click)="openEditModal(webhook)" class="btn-icon" title="Editar" *ngIf="canManageWebhooks()">
+              ✏️
+            </button>
+            <button (click)="deleteWebhook(webhook)" class="btn-icon btn-danger" title="Excluir" *ngIf="canDeleteWebhooks()">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div class="webhook-events">
+          <h4>Eventos Ativos:</h4>
+          <div class="events-list">
+            <span 
+              class="event-badge" 
+              *ngFor="let evento of webhook.eventos"
+              [style.background-color]="getEventColor(evento)"
+            >
+              {{ getEventLabel(evento) }}
+            </span>
+            <span class="no-events" *ngIf="webhook.eventos.length === 0">
+              Nenhum evento configurado
+            </span>
+          </div>
+        </div>
+
+        <div class="webhook-footer">
+          <div class="webhook-actions-footer">
+            <button (click)="testWebhook(webhook)" class="btn btn-sm btn-outline">
+              🧪 Testar Webhook
+            </button>
+            <span class="webhook-date">
+              Criado em: {{ formatDate(webhook.dataCriacao) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredWebhooks.length === 0 && !loading">
+      <div class="empty-icon">🔗</div>
+      <h3>Nenhum webhook encontrado</h3>
+      <p>Não há webhooks que correspondam aos filtros aplicados.</p>
+      <button (click)="clearFilters()" class="btn btn-primary">
+        Limpar Filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Create Webhook Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Novo Webhook</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createWebhook()">
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" id="nome" [(ngModel)]="newWebhook.nome" name="nome" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="url">URL *</label>
+            <input type="url" id="url" [(ngModel)]="newWebhook.url" name="url" required class="form-input" 
+                   placeholder="https://seu-n8n.com/webhook/leadpro">
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="newWebhook.ativo" name="ativo">
+              <span class="checkmark"></span>
+              Webhook ativo
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Criar Webhook</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Webhook Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Editar Webhook</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="updateWebhook()">
+          <div class="form-group">
+            <label for="edit-nome">Nome *</label>
+            <input type="text" id="edit-nome" [(ngModel)]="editWebhook.nome" name="nome" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-url">URL *</label>
+            <input type="url" id="edit-url" [(ngModel)]="editWebhook.url" name="url" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="editWebhook.ativo" name="ativo">
+              <span class="checkmark"></span>
+              Webhook ativo
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Atualizar Webhook</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configure Events Modal -->
+  <div class="modal-overlay" *ngIf="showConfigModal" (click)="closeModals()">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Configurar Eventos - {{ configWebhook?.nome }}</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="config-section">
+          <h3>📡 Eventos Disponíveis</h3>
+          <p class="config-description">
+            Selecione quais eventos devem disparar este webhook:
+          </p>
+          
+          <div class="events-grid">
+            <div 
+              class="event-item" 
+              *ngFor="let evento of Object.values(WebhookEvent)"
+              [class.active]="configWebhook?.eventos?.includes(evento)"
+            >
+              <div class="event-header">
+                <span class="event-color" [style.background-color]="getEventColor(evento)"></span>
+                <span class="event-name">{{ getEventLabel(evento) }}</span>
+                <label class="toggle-switch">
+                  <input 
+                    type="checkbox" 
+                    [checked]="configWebhook?.eventos?.includes(evento)"
+                    (change)="toggleEvent(configWebhook!, evento)"
+                  >
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <p class="event-description">
+                {{ getEventDescription(evento) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section" *ngIf="configWebhook?.eventos?.length">
+          <h3>📊 Dados Enviados por Evento</h3>
+          <p class="config-description">
+            Configure quais dados serão enviados para cada evento ativo:
+          </p>
+          
+          <div class="events-config" *ngFor="let evento of configWebhook?.eventos || []">
+            <div class="event-config-header">
+              <h4>{{ getEventLabel(evento) }}</h4>
+              <span class="event-badge" [style.background-color]="getEventColor(evento)">
+                {{ evento }}
+              </span>
+            </div>
+            
+            <div class="data-fields-grid">
+              <div 
+                class="data-field-item" 
+                *ngFor="let field of availableDataFields"
+                [class.obrigatorio]="field.obrigatorio"
+              >
+                <label class="field-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="field.obrigatorio || isDataFieldActive(configWebhook!, evento, field.campo)"
+                    [disabled]="field.obrigatorio"
+                    (change)="toggleDataField(configWebhook!, evento, field.campo)"
+                  >
+                  <span class="checkmark"></span>
+                  <span class="field-label">{{ field.label }}</span>
+                  <span class="field-required" *ngIf="field.obrigatorio">*</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" (click)="closeModals()" class="btn btn-primary">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

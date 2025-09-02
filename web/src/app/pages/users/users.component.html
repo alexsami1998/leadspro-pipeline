@@ -1,0 +1,212 @@
+<div class="users-container">
+  <div class="users-header">
+    <h1>Gestão de Usuários</h1>
+    <p>Gerencie todos os usuários do sistema</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Carregando usuários...</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="users-content" *ngIf="!loading">
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+      <div class="search-filters">
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="Buscar usuários..."
+            [(ngModel)]="searchTerm"
+            (input)="filterUsers()"
+            class="search-input"
+          />
+        </div>
+
+        <div class="filters">
+          <button (click)="clearFilters()" class="btn btn-outline">
+            🔄 Limpar Filtros
+          </button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button (click)="openCreateModal()" class="btn btn-primary" *ngIf="canManageUsers()">
+          ➕ Novo Usuário
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+      <span>{{ filteredUsers.length }} usuário(s) encontrado(s)</span>
+    </div>
+
+    <!-- Users Grid -->
+    <div class="users-grid" *ngIf="filteredUsers.length > 0">
+      <div class="user-card" *ngFor="let user of filteredUsers">
+        <div class="user-header">
+          <div class="user-avatar">
+            <span>{{ user.nome.charAt(0) }}</span>
+          </div>
+          <div class="user-info">
+            <h3>{{ user.nome }}</h3>
+            <p class="user-email">{{ user.email }}</p>
+            <p class="user-role">{{ getRoleLabel(user.role) }}</p>
+          </div>
+          <div class="user-actions">
+            <button (click)="openEditModal(user)" class="btn-icon" title="Editar" *ngIf="canManageUsers()">
+              ✏️
+            </button>
+            <button (click)="deleteUser(user)" class="btn-icon btn-danger" title="Excluir" *ngIf="canDeleteUsers()">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div class="user-details">
+          <div class="detail-row">
+            <span class="label">Status:</span>
+            <span class="value">
+              <span class="status-badge" [class.active]="user.ativo" [class.inactive]="!user.ativo">
+                {{ user.ativo ? 'Ativo' : 'Inativo' }}
+              </span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Criado em:</span>
+            <span class="value">{{ formatDate(user.dataCriacao) }}</span>
+          </div>
+        </div>
+
+        <div class="user-footer">
+          <div class="user-actions-footer">
+            <button 
+              (click)="toggleUserStatus(user)" 
+              class="btn btn-sm"
+              [class.btn-success]="!user.ativo"
+              [class.btn-warning]="user.ativo"
+              *ngIf="canManageUsers()"
+            >
+              {{ user.ativo ? 'Desativar' : 'Ativar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUsers.length === 0 && !loading">
+      <div class="empty-icon">👥</div>
+      <h3>Nenhum usuário encontrado</h3>
+      <p>Não há usuários que correspondam aos filtros aplicados.</p>
+      <button (click)="clearFilters()" class="btn btn-primary">
+        Limpar Filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Create User Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Novo Usuário</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createUser()">
+          <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" id="nome" [(ngModel)]="newUser.nome" name="nome" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" [(ngModel)]="newUser.email" name="email" required class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="senha">Senha *</label>
+              <input type="password" id="senha" [(ngModel)]="newUser.senha" name="senha" required class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="role">Perfil *</label>
+              <select id="role" [(ngModel)]="newUser.role" name="role" required class="form-input">
+                <option *ngFor="let role of Object.values(UserRole)" [value]="role">
+                  {{ getRoleLabel(role) }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="newUser.ativo" name="ativo">
+              <span class="checkmark"></span>
+              Usuário ativo
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Criar Usuário</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeModals()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Editar Usuário</h2>
+        <button (click)="closeModals()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="updateUser()">
+          <div class="form-group">
+            <label for="edit-nome">Nome *</label>
+            <input type="text" id="edit-nome" [(ngModel)]="editUser.nome" name="nome" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-email">Email *</label>
+            <input type="email" id="edit-email" [(ngModel)]="editUser.email" name="email" required class="form-input">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-senha">Nova Senha (deixe em branco para manter)</label>
+              <input type="password" id="edit-senha" [(ngModel)]="editUser.senha" name="senha" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="edit-role">Perfil *</label>
+              <select id="edit-role" [(ngModel)]="editUser.role" name="role" required class="form-input">
+                <option *ngFor="let role of Object.values(UserRole)" [value]="role">
+                  {{ getRoleLabel(role) }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="editUser.ativo" name="ativo">
+              <span class="checkmark"></span>
+              Usuário ativo
+            </label>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Atualizar Usuário</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

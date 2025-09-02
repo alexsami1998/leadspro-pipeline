@@ -1,0 +1,117 @@
+#root { margin: 0; padding: 0; }
+
+/* Minimal layout styles for sidebar + content */
+.app-grid { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: #0f172a; color: white; padding: 24px; }
+.sidebar h2 { margin-top: 0; margin-bottom: 16px; font-size: 20px; }
+.sidebar nav { display: grid; gap: 8px; }
+.sidebar a { color: #e2e8f0; text-decoration: none; padding: 8px 10px; border-radius: 8px; }
+.sidebar a.active, .sidebar a:hover { background: #1e293b; }
+.content { padding: 24px; }
+
+.card { padding: 2em; }
+
+/* Dashboard Styles */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #007bff;
+  margin: 0.5rem 0;
+}
+
+/* Leads, Users, Webhooks Styles */
+.leads-container,
+.users-container,
+.webhooks-container {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.leads-header,
+.users-header,
+.webhooks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background: #0056b3;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.leads-grid,
+.users-grid,
+.webhooks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.lead-card,
+.user-card,
+.webhook-card {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+}
+
+.lead-card h3,
+.user-card h3,
+.webhook-card h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.user-actions,
+.webhook-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}

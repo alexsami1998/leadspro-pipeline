@@ -1,0 +1,63 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">
+        <h1>LeadPro</h1>
+        <p>Sistema de Gestão de Leads</p>
+      </div>
+    </div>
+
+    <form class="login-form" (ngSubmit)="onSubmit()" (keypress)="onKeyPress($event)">
+      <div class="form-group">
+        <label for="email">Usuário</label>
+        <input
+          type="text"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="Digite seu usuário"
+          required
+          [disabled]="loading"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input
+          type="password"
+          id="senha"
+          name="senha"
+          [(ngModel)]="senha"
+          placeholder="Digite sua senha"
+          required
+          [disabled]="loading"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group" *ngIf="errorMessage">
+        <div class="error-message">
+          {{ errorMessage }}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        class="login-button"
+        [disabled]="loading || !email || !senha"
+      >
+        <span *ngIf="!loading">Entrar</span>
+        <span *ngIf="loading" class="loading-spinner"></span>
+      </button>
+    </form>
+
+         <div class="login-footer">
+       <p class="credentials-info">
+         <strong>Credenciais padrão:</strong><br>
+         Usuário: admin<br>
+         Senha: 123&#64;mudar
+       </p>
+     </div>
+  </div>
+</div>
