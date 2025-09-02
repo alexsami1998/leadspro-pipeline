@@ -10,11 +10,11 @@ const PORT = process.env.PORT || 3000;
 
 // Configuração do banco de dados PostgreSQL
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || '191.96.251.155',
   port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'leadpro',
+  database: process.env.DB_NAME || 'n8n',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
+  password: process.env.DB_PASSWORD || 'MICROazu9107@#',
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -373,10 +373,10 @@ app.post('/api/webhooks', async (req, res) => {
     const { nome, url, ativo, eventos, configuracaoEventos } = req.body;
     
     const result = await pool.query(`
-      INSERT INTO webhooks (nome, url, ativo, eventos, configuracao_eventos)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO webhooks (nome, url, ativo, eventos)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [nome, url, ativo, JSON.stringify(eventos), JSON.stringify(configuracaoEventos || [])]);
+    `, [nome, url, ativo, JSON.stringify(eventos)]);
     
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -397,7 +397,7 @@ app.put('/api/webhooks/:id', async (req, res) => {
     if (updates.url !== undefined) mappedUpdates.url = updates.url;
     if (updates.ativo !== undefined) mappedUpdates.ativo = updates.ativo;
     if (updates.eventos !== undefined) mappedUpdates.eventos = JSON.stringify(updates.eventos);
-    if (updates.configuracaoEventos !== undefined) mappedUpdates.configuracao_eventos = JSON.stringify(updates.configuracaoEventos);
+    // Removida referência à coluna configuracao_eventos que não existe
     
     const fields = Object.keys(mappedUpdates);
     
