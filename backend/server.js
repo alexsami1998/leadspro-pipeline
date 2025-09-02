@@ -10,11 +10,11 @@ const PORT = process.env.PORT || 3000;
 
 // Configuração do banco de dados PostgreSQL
 const pool = new Pool({
-  host: '191.96.251.155',
-  port: 5432,
-  database: 'n8n',
-  user: 'postgres',
-  password: 'MICROazu9107@#',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  database: process.env.DB_NAME || 'leadpro',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'postgres',
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,

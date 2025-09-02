@@ -34,6 +34,14 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@angular-devkit/build-angular": "^20.2.1",
+    "@angular/animations": "^20.2.3",
+    "@angular/common": "^20.2.3",
+    "@angular/compiler": "^20.2.3",
+    "@angular/core": "^20.2.3",
+    "@angular/forms": "^20.2.3",
+    "@angular/platform-browser": "^20.2.3",
+    "@angular/router": "^20.2.3",
     "@prisma/client": "^6.15.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -43,6 +51,7 @@
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
     "prisma": "^6.15.0",
-    "zod": "^4.1.5"
+    "zod": "^4.1.5",
+    "zone.js": "^0.15.1"
   }
 }
