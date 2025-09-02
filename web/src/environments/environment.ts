@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000/api',
+  apiUrl: 'http://191.96.251.155:3000/api',
   appName: 'LeadPro',
   version: '1.0.0',
   defaultLanguage: 'pt-BR',

@@ -33,7 +33,12 @@ app.use('/api/', limiter);
 
 // CORS
 app.use(cors({
-  origin: ['http://localhost:4200', 'http://127.0.0.1:4200'],
+  origin: [
+    'http://localhost:4200', 
+    'http://127.0.0.1:4200',
+    'http://191.96.251.155:4200',
+    'http://191.96.251.155'
+  ],
   credentials: true
 }));
 
@@ -719,7 +724,8 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📊 API disponível em: http://localhost:${PORT}/api`);
+  console.log(`📊 API disponível em: http://191.96.251.155:${PORT}/api`);
+  console.log(`🌐 Acessível externamente em: http://191.96.251.155:${PORT}/api`);
 });

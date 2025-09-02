@@ -73,10 +73,16 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "web:build:production"
+              "buildTarget": "web:build:production",
+              "host": "0.0.0.0",
+              "port": 4200,
+              "disableHostCheck": true
             },
             "development": {
-              "buildTarget": "web:build:development"
+              "buildTarget": "web:build:development",
+              "host": "0.0.0.0",
+              "port": 4200,
+              "disableHostCheck": true
             }
           },
           "defaultConfiguration": "development"
