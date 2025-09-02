@@ -34,22 +34,22 @@
   margin-bottom: 30px;
 }
 
-.logo h1 {
-  color: #333;
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
-.logo p {
+.system-description {
   color: #666;
-  font-size: 1rem;
-  margin: 10px 0 0 0;
-  font-weight: 400;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+  background: #f8f9fa;
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: 1px solid #e1e5e9;
 }
 
 .login-form {

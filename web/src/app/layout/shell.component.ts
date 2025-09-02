@@ -4,11 +4,12 @@ import { Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { User } from '../models/lead.model';
+import { LogoComponent } from '../components/logo/logo.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LogoComponent],
   templateUrl: './shell.component.html',
   styleUrls: ['./shell.component.scss']
 })

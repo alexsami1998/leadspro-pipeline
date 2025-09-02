@@ -49,35 +49,17 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   transition: all 0.3s ease;
+  width: 100%;
 }
 
 .logo.collapsed {
   justify-content: center;
 }
 
-.logo-icon {
-  font-size: 1.5rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.logo-text {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(45deg, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.logo.collapsed .logo-text {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
+.logo.collapsed app-logo {
+  transform: scale(0.8);
 }
 
 .sidebar-toggle {
@@ -398,6 +380,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: 1;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
 }
 

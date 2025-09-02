@@ -3,8 +3,7 @@
   <aside class="sidebar" [class.collapsed]="!sidebarOpen">
     <div class="sidebar-header">
       <div class="logo" [class.collapsed]="!sidebarOpen">
-        <!--<div class="logo-icon">🚀</div> -->
-        <h2 class="logo-text">LeadPro</h2>
+        <app-logo size="small" logoPath="assets/images/logo.png" altText="Logo Soluções Monitoração"></app-logo>
       </div>
       <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarOpen ? 'Recolher menu' : 'Expandir menu'">
         <svg class="toggle-icon" [class.rotated]="!sidebarOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -124,7 +123,9 @@
         <span class="hamburger"></span>
       </button>
       <div class="header-content">
-        <h1 class="page-title">LeadPro</h1>
+        <div class="header-logo">
+          <app-logo size="medium" logoPath="assets/images/logo.png" altText="Logo Soluções Monitoração"></app-logo>
+        </div>
         <div class="header-actions">
           <span class="user-greeting" *ngIf="currentUser$ | async as user">
             Olá, {{ user.nome }}!
