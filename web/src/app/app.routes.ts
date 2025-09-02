@@ -35,6 +35,10 @@ export const routes: Routes = [
       {
         path: 'webhooks',
         loadComponent: () => import('./pages/webhooks/webhooks.component').then(m => m.WebhooksComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },

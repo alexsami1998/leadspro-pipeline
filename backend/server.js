@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
@@ -68,8 +69,9 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = result.rows[0];
     
-    // Verifica senha (simplificado - em produção usar bcrypt.compare)
-    if (senha === user.senha || (senha === '123@mudar' && email === 'admin')) {
+    // Verifica senha usando bcrypt
+    const isPasswordValid = await bcrypt.compare(senha, user.senha);
+    if (isPasswordValid || (senha === '123@mudar' && email === 'admin')) {
       // Remove senha do objeto retornado
       delete user.senha;
       
@@ -272,11 +274,15 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ error: 'Email já cadastrado' });
     }
 
+    // Hash da senha
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(senha, saltRounds);
+
     const result = await pool.query(`
       INSERT INTO users (nome, email, senha, role, ativo)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, nome, email, role, ativo, data_criacao, data_atualizacao
-    `, [nome, email, senha, role, ativo]);
+    `, [nome, email, hashedPassword, role, ativo]);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -295,7 +301,10 @@ app.put('/api/users/:id', async (req, res) => {
     
     if (updates.nome !== undefined) mappedUpdates.nome = updates.nome;
     if (updates.email !== undefined) mappedUpdates.email = updates.email;
-    if (updates.senha !== undefined && updates.senha.trim() !== '') mappedUpdates.senha = updates.senha;
+    if (updates.senha !== undefined && updates.senha.trim() !== '') {
+      const saltRounds = 12;
+      mappedUpdates.senha = await bcrypt.hash(updates.senha, saltRounds);
+    }
     if (updates.role !== undefined) mappedUpdates.role = updates.role;
     if (updates.ativo !== undefined) mappedUpdates.ativo = updates.ativo;
     
@@ -478,6 +487,58 @@ app.post('/api/database/init', async (req, res) => {
   } catch (error) {
     console.error('Erro na inicialização:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Rota para atualizar perfil do usuário
+app.put('/api/profile', async (req, res) => {
+  try {
+    const { userId, nome, email, currentPassword, newPassword } = req.body;
+
+    // Verificar se o usuário existe
+    const user = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const updates = {};
+    
+    if (nome !== undefined) updates.nome = nome;
+    if (email !== undefined) {
+      // Verificar se email já existe
+      const existingUser = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, userId]);
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ error: 'Email já cadastrado' });
+      }
+      updates.email = email;
+    }
+
+    // Se estiver alterando senha, verificar senha atual
+    if (newPassword && currentPassword) {
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.rows[0].senha);
+      if (!isCurrentPasswordValid) {
+        return res.status(400).json({ error: 'Senha atual incorreta' });
+      }
+      
+      const saltRounds = 12;
+      updates.senha = await bcrypt.hash(newPassword, saltRounds);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Nenhum campo válido para atualização' });
+    }
+
+    const fields = Object.keys(updates);
+    const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+    const query = `UPDATE users SET ${setClause}, data_atualizacao = NOW() WHERE id = $1 RETURNING id, nome, email, role, ativo, data_criacao, data_atualizacao`;
+    
+    const values = Object.values(updates);
+    const result = await pool.query(query, [userId, ...values]);
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

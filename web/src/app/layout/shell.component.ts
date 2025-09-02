@@ -24,10 +24,18 @@ export class ShellComponent implements OnInit {
   ngOnInit(): void {
     // Inicialização após a construção do componente
     this.currentUser$ = this.authService.currentUser$;
+    
+    // Restaurar preferência da sidebar do localStorage
+    const savedSidebarState = localStorage.getItem('sidebarOpen');
+    if (savedSidebarState !== null) {
+      this.sidebarOpen = savedSidebarState === 'true';
+    }
   }
 
   toggleSidebar(): void {
     this.sidebarOpen = !this.sidebarOpen;
+    // Salvar preferência no localStorage
+    localStorage.setItem('sidebarOpen', this.sidebarOpen.toString());
   }
 
   logout(): void {
