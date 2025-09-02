@@ -114,7 +114,25 @@ app.get('/api/leads', async (req, res) => {
       ORDER BY data_criacao DESC
     `);
     
-    res.json(result.rows);
+    // Mapear campos do banco para o frontend
+    const mappedLeads = result.rows.map(lead => ({
+      id: lead.id,
+      nome: lead.nome,
+      email: lead.email,
+      telefone: lead.telefone,
+      empresa: lead.empresa,
+      cargo: lead.cargo,
+      fonte: lead.fonte,
+      status: lead.status,
+      valorContrato: lead.valor_contrato,
+      observacoes: lead.observacoes,
+      dataCriacao: lead.data_criacao,
+      dataAtualizacao: lead.data_atualizacao,
+      usuarioCriacao: lead.usuario_criacao,
+      usuarioAtualizacao: lead.usuario_atualizacao
+    }));
+    
+    res.json(mappedLeads);
   } catch (error) {
     console.error('Erro ao buscar leads:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -144,7 +162,7 @@ app.post('/api/leads', async (req, res) => {
   try {
     const {
       nome, email, telefone, empresa, cargo, fonte, status,
-      valor_contrato, observacoes, usuario_criacao
+      valorContrato, observacoes, usuarioCriacao
     } = req.body;
 
     const result = await pool.query(`
@@ -153,9 +171,28 @@ app.post('/api/leads', async (req, res) => {
         valor_contrato, observacoes, usuario_criacao
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [nome, email, telefone, empresa, cargo, fonte, status, valor_contrato, observacoes, usuario_criacao]);
+    `, [nome, email, telefone, empresa, cargo, fonte, status, valorContrato, observacoes, usuarioCriacao]);
 
-    res.status(201).json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const lead = result.rows[0];
+    const mappedLead = {
+      id: lead.id,
+      nome: lead.nome,
+      email: lead.email,
+      telefone: lead.telefone,
+      empresa: lead.empresa,
+      cargo: lead.cargo,
+      fonte: lead.fonte,
+      status: lead.status,
+      valorContrato: lead.valor_contrato,
+      observacoes: lead.observacoes,
+      dataCriacao: lead.data_criacao,
+      dataAtualizacao: lead.data_atualizacao,
+      usuarioCriacao: lead.usuario_criacao,
+      usuarioAtualizacao: lead.usuario_atualizacao
+    };
+
+    res.status(201).json(mappedLead);
   } catch (error) {
     console.error('Erro ao criar lead:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -177,9 +214,9 @@ app.put('/api/leads/:id', async (req, res) => {
     if (updates.cargo !== undefined) mappedUpdates.cargo = updates.cargo;
     if (updates.fonte !== undefined) mappedUpdates.fonte = updates.fonte;
     if (updates.status !== undefined) mappedUpdates.status = updates.status;
-    if (updates.valor_contrato !== undefined) mappedUpdates.valor_contrato = updates.valor_contrato;
+    if (updates.valorContrato !== undefined) mappedUpdates.valor_contrato = updates.valorContrato;
     if (updates.observacoes !== undefined) mappedUpdates.observacoes = updates.observacoes;
-    if (updates.usuario_atualizacao !== undefined) mappedUpdates.usuario_atualizacao = updates.usuario_atualizacao;
+    if (updates.usuarioAtualizacao !== undefined) mappedUpdates.usuario_atualizacao = updates.usuarioAtualizacao;
     
     const fields = Object.keys(mappedUpdates);
     
@@ -197,7 +234,26 @@ app.put('/api/leads/:id', async (req, res) => {
       return res.status(404).json({ error: 'Lead não encontrado' });
     }
     
-    res.json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const lead = result.rows[0];
+    const mappedLead = {
+      id: lead.id,
+      nome: lead.nome,
+      email: lead.email,
+      telefone: lead.telefone,
+      empresa: lead.empresa,
+      cargo: lead.cargo,
+      fonte: lead.fonte,
+      status: lead.status,
+      valorContrato: lead.valor_contrato,
+      observacoes: lead.observacoes,
+      dataCriacao: lead.data_criacao,
+      dataAtualizacao: lead.data_atualizacao,
+      usuarioCriacao: lead.usuario_criacao,
+      usuarioAtualizacao: lead.usuario_atualizacao
+    };
+    
+    res.json(mappedLead);
   } catch (error) {
     console.error('Erro ao atualizar lead:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -229,7 +285,17 @@ app.get('/api/leads/:id/interactions', async (req, res) => {
       [id]
     );
     
-    res.json(result.rows);
+    // Mapear campos do banco para o frontend
+    const mappedInteractions = result.rows.map(interaction => ({
+      id: interaction.id,
+      leadId: interaction.lead_id,
+      tipo: interaction.tipo,
+      conteudo: interaction.conteudo,
+      dataCriacao: interaction.data_criacao,
+      usuarioCriacao: interaction.usuario_criacao
+    }));
+    
+    res.json(mappedInteractions);
   } catch (error) {
     console.error('Erro ao buscar interações:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -246,7 +312,18 @@ app.post('/api/interactions', async (req, res) => {
       RETURNING *
     `, [lead_id, tipo, conteudo, usuario_criacao]);
     
-    res.status(201).json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const interaction = result.rows[0];
+    const mappedInteraction = {
+      id: interaction.id,
+      leadId: interaction.lead_id,
+      tipo: interaction.tipo,
+      conteudo: interaction.conteudo,
+      dataCriacao: interaction.data_criacao,
+      usuarioCriacao: interaction.usuario_criacao
+    };
+    
+    res.status(201).json(mappedInteraction);
   } catch (error) {
     console.error('Erro ao criar interação:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -257,7 +334,19 @@ app.post('/api/interactions', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, nome, email, role, ativo, data_criacao, data_atualizacao FROM users ORDER BY data_criacao DESC');
-    res.json(result.rows);
+    
+    // Mapear campos do banco para o frontend
+    const mappedUsers = result.rows.map(user => ({
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      role: user.role,
+      ativo: user.ativo,
+      dataCriacao: user.data_criacao,
+      dataAtualizacao: user.data_atualizacao
+    }));
+    
+    res.json(mappedUsers);
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -284,7 +373,19 @@ app.post('/api/users', async (req, res) => {
       RETURNING id, nome, email, role, ativo, data_criacao, data_atualizacao
     `, [nome, email, hashedPassword, role, ativo]);
 
-    res.status(201).json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const userData = result.rows[0];
+    const mappedUser = {
+      id: userData.id,
+      nome: userData.nome,
+      email: userData.email,
+      role: userData.role,
+      ativo: userData.ativo,
+      dataCriacao: userData.data_criacao,
+      dataAtualizacao: userData.data_atualizacao
+    };
+
+    res.status(201).json(mappedUser);
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -332,7 +433,19 @@ app.put('/api/users/:id', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
     
-    res.json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const userInfo = result.rows[0];
+    const mappedUser = {
+      id: userInfo.id,
+      nome: userInfo.nome,
+      email: userInfo.email,
+      role: userInfo.role,
+      ativo: userInfo.ativo,
+      dataCriacao: userInfo.data_criacao,
+      dataAtualizacao: userInfo.data_atualizacao
+    };
+    
+    res.json(mappedUser);
   } catch (error) {
     console.error('Erro ao atualizar usuário:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -370,7 +483,19 @@ app.delete('/api/users/:id', async (req, res) => {
 app.get('/api/webhooks', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM webhooks ORDER BY data_criacao DESC');
-    res.json(result.rows);
+    
+    // Mapear campos do banco para o frontend
+    const mappedWebhooks = result.rows.map(webhook => ({
+      id: webhook.id,
+      nome: webhook.nome,
+      url: webhook.url,
+      ativo: webhook.ativo,
+      eventos: webhook.eventos,
+      dataCriacao: webhook.data_criacao,
+      dataAtualizacao: webhook.data_atualizacao
+    }));
+    
+    res.json(mappedWebhooks);
   } catch (error) {
     console.error('Erro ao buscar webhooks:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -387,7 +512,19 @@ app.post('/api/webhooks', async (req, res) => {
       RETURNING *
     `, [nome, url, ativo, JSON.stringify(eventos)]);
     
-    res.status(201).json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const webhook = result.rows[0];
+    const mappedWebhook = {
+      id: webhook.id,
+      nome: webhook.nome,
+      url: webhook.url,
+      ativo: webhook.ativo,
+      eventos: webhook.eventos,
+      dataCriacao: webhook.data_criacao,
+      dataAtualizacao: webhook.data_atualizacao
+    };
+    
+    res.status(201).json(mappedWebhook);
   } catch (error) {
     console.error('Erro ao criar webhook:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -424,7 +561,19 @@ app.put('/api/webhooks/:id', async (req, res) => {
       return res.status(404).json({ error: 'Webhook não encontrado' });
     }
     
-    res.json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const webhook = result.rows[0];
+    const mappedWebhook = {
+      id: webhook.id,
+      nome: webhook.nome,
+      url: webhook.url,
+      ativo: webhook.ativo,
+      eventos: webhook.eventos,
+      dataCriacao: webhook.data_criacao,
+      dataAtualizacao: webhook.data_atualizacao
+    };
+    
+    res.json(mappedWebhook);
   } catch (error) {
     console.error('Erro ao atualizar webhook:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -535,7 +684,19 @@ app.put('/api/profile', async (req, res) => {
     const values = Object.values(updates);
     const result = await pool.query(query, [userId, ...values]);
     
-    res.json(result.rows[0]);
+    // Mapear campos do banco para o frontend
+    const userProfile = result.rows[0];
+    const mappedProfile = {
+      id: userProfile.id,
+      nome: userProfile.nome,
+      email: userProfile.email,
+      role: userProfile.role,
+      ativo: userProfile.ativo,
+      dataCriacao: userProfile.data_criacao,
+      dataAtualizacao: userProfile.data_atualizacao
+    };
+    
+    res.json(mappedProfile);
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });

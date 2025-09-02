@@ -62,6 +62,7 @@ export enum LeadStatus {
   // Etapa de Cadastro e Cobrança
   CADASTRADO_SGP = 'CADASTRADO_SGP',
   FATURADO = 'FATURADO',
+  CLIENTE_ANTIGO = 'CLIENTE ANTIGO',
   
   // Estados Especiais
   ARMAZENADO_FUTURO = 'ARMAZENADO_FUTURO',
