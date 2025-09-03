@@ -32,18 +32,18 @@ stop_process "logs/backend.pid" "Backend"
 # Parar processos por porta (fallback)
 echo "🔍 Verificando processos restantes..."
 
-# Parar processos na porta 4200 (Frontend)
-if lsof -ti:4200 > /dev/null 2>&1; then
-    echo "🛑 Parando processo na porta 4200..."
-    lsof -ti:4200 | xargs kill -9
-    echo "✅ Processo na porta 4200 parado"
+# Parar processos na porta 8080 (Frontend)
+if lsof -ti:8080 > /dev/null 2>&1; then
+    echo "🛑 Parando processo na porta 8080..."
+    lsof -ti:8080 | xargs kill -9
+    echo "✅ Processo na porta 8080 parado"
 fi
 
-# Parar processos na porta 3000 (Backend)
-if lsof -ti:3000 > /dev/null 2>&1; then
-    echo "🛑 Parando processo na porta 3000..."
-    lsof -ti:3000 | xargs kill -9
-    echo "✅ Processo na porta 3000 parado"
+# Parar processos na porta 5000 (Backend)
+if lsof -ti:5000 > /dev/null 2>&1; then
+    echo "🛑 Parando processo na porta 5000..."
+    lsof -ti:5000 | xargs kill -9
+    echo "✅ Processo na porta 5000 parado"
 fi
 
 echo ""

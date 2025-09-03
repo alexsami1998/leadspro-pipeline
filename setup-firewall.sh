@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "🔥 Configurando Firewall da VM para acesso externo..."
-echo "🌐 IP da VM: 191.96.251.155"
+echo "🌐 IP da VM: localhost"
 
 # Verificar se o UFW está instalado
 if ! command -v ufw &> /dev/null; then
@@ -20,11 +20,11 @@ echo "🔓 Configurando regras de firewall..."
 # Permitir SSH (porta 22)
 sudo ufw allow 22/tcp
 
-# Permitir acesso ao backend (porta 3000)
-sudo ufw allow 3000/tcp
+# Permitir acesso ao backend (porta 5000)
+sudo ufw allow 5000/tcp
 
-# Permitir acesso ao frontend (porta 4200)
-sudo ufw allow 4200/tcp
+# Permitir acesso ao frontend (porta 8080)
+sudo ufw allow 8080/tcp
 
 # Permitir acesso HTTP (porta 80) se usar nginx
 sudo ufw allow 80/tcp
@@ -45,14 +45,14 @@ sudo ufw status numbered
 
 echo ""
 echo "🌐 URLs de acesso externo:"
-echo "   Frontend: http://191.96.251.155:4200"
-echo "   Backend API: http://191.96.251.155:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 echo ""
 echo "⚠️  IMPORTANTE:"
-echo "   - As portas 3000 e 4200 estão abertas para acesso externo"
+echo "   - As portas 5000 e 8080 estão abertas para acesso externo"
 echo "   - O firewall está ativo e protegendo a VM"
 echo "   - Apenas as portas necessárias estão abertas"
 echo ""
 echo "🔧 Para verificar se as portas estão acessíveis:"
-echo "   telnet 191.96.251.155 3000"
-echo "   telnet 191.96.251.155 4200"
+echo "   telnet localhost 5000"
+echo "   telnet localhost 8080"

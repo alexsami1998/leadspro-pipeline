@@ -47,12 +47,8 @@ export class LeadService {
 
     return this.databaseService.createLead(newLead).pipe(
       map(createdLead => {
-        // Recarrega a lista de leads após criar um novo
         this.loadLeads();
-        
-        // Disparar webhook para lead criado
         this.webhookDispatcher.dispatchLeadCreated(createdLead);
-        
         return createdLead;
       })
     );
@@ -67,26 +63,19 @@ export class LeadService {
 
     return this.databaseService.updateLead(id, updatedLead as Lead).pipe(
       map(updatedLead => {
-        // Recarrega a lista de leads após atualizar
         this.loadLeads();
-        
-        // Disparar webhook para lead atualizado
         this.webhookDispatcher.dispatchLeadUpdated(updatedLead);
-        
         return updatedLead;
       })
     );
   }
 
   updateLeadStatus(id: number, newStatus: LeadStatus): Observable<Lead> {
-    // Buscar lead atual para comparar status
     return this.databaseService.getLead(id).pipe(
       map(currentLead => {
         const oldStatus = currentLead.status;
         
-        // Atualizar lead
         this.updateLead(id, { status: newStatus }).subscribe(updatedLead => {
-          // Disparar webhook específico para mudança de status
           this.webhookDispatcher.dispatchStatusChanged(updatedLead, oldStatus, newStatus);
         });
         
@@ -98,13 +87,11 @@ export class LeadService {
   deleteLead(id: number): Observable<void> {
     return this.databaseService.deleteLead(id).pipe(
       map(() => {
-        // Recarrega a lista de leads após excluir
         this.loadLeads();
       })
     );
   }
 
-  // Métodos para transições de status baseadas no fluxograma
   qualifyLead(id: number, isQualified: boolean): Observable<Lead> {
     const newStatus = isQualified ? LeadStatus.LEAD_QUALIFICADO : LeadStatus.LEAD_NAO_QUALIFICADO;
     return this.updateLeadStatus(id, newStatus);

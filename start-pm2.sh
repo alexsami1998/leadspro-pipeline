@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "🚀 Iniciando Sistema LeadPro com PM2..."
-echo "🌐 Configurado para acesso externo via IP: 191.96.251.155"
+echo "🌐 Configurado para acesso externo via IP: localhost"
 
 # Verificar se o PM2 está instalado
 if ! command -v pm2 &> /dev/null; then
@@ -37,12 +37,12 @@ pm2 list
 
 echo ""
 echo "📊 URLs de acesso local:"
-echo "   Frontend: http://localhost:4200"
-echo "   Backend API: http://localhost:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 echo ""
 echo "🌐 URLs externas (acessíveis de qualquer dispositivo):"
-echo "   Frontend: http://191.96.251.155:4200"
-echo "   Backend API: http://191.96.251.155:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 echo ""
 echo "🔐 Credenciais de acesso:"
 echo "   Usuário: admin"

@@ -53,8 +53,8 @@ echo ""
 echo "🎉 Ambiente iniciado com sucesso!"
 echo ""
 echo "📋 Informações de Acesso:"
-echo "   • Frontend: http://191.96.251.155:4200"
-echo "   • Backend API: http://191.96.251.155:3000/api"
+echo "   • Frontend: http://localhost:8080"
+echo "   • Backend API: http://localhost:5000/api"
 echo "   • PgAdmin: http://localhost:5050"
 echo "   • PostgreSQL: localhost:5432"
 echo ""
@@ -70,4 +70,4 @@ echo "🛑 Para parar o ambiente, execute: ./stop-dev.sh"
 echo ""
 
 # Iniciar o servidor Angular
-ng serve --host 0.0.0.0 --port 4200
+ng serve --host 0.0.0.0 --port 8080

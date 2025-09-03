@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "🌐 Configurando Nginx como Proxy Reverso para LeadPro..."
-echo "🌐 IP da VM: 191.96.251.155"
+echo "🌐 IP da VM: localhost"
 
 # Verificar se o nginx está instalado
 if ! command -v nginx &> /dev/null; then
@@ -42,8 +42,8 @@ if [ $? -eq 0 ]; then
     echo "🎉 Nginx configurado com sucesso!"
     echo ""
     echo "📊 URLs de acesso:"
-    echo "   Frontend: http://191.96.251.155"
-    echo "   Backend API: http://191.96.251.155/api"
+    echo "   Frontend: http://localhost"
+echo "   Backend API: http://localhost/api"
     echo ""
     echo "⚠️  IMPORTANTE:"
     echo "   - O Nginx está servindo na porta 80"

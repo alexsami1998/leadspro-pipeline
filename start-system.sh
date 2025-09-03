@@ -26,45 +26,45 @@ wait_for_port() {
 # Iniciar Backend
 echo "🔧 Iniciando Backend..."
 cd backend
-if ! check_port 3000; then
+if ! check_port 5000; then
     node server.js > ../logs/backend.log 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > ../logs/backend.pid
     echo "✅ Backend iniciado (PID: $BACKEND_PID)"
 else
-    echo "⚠️  Backend já está rodando na porta 3000"
+    echo "⚠️  Backend já está rodando na porta 5000"
 fi
 cd ..
 
 # Aguardar backend ficar disponível
-wait_for_port 3000 "Backend"
+wait_for_port 5000 "Backend"
 
 # Iniciar Frontend
 echo "🌐 Iniciando Frontend..."
 cd web
-if ! check_port 4200; then
-    ng serve --host 0.0.0.0 --port 4200 --disable-host-check > ../logs/frontend.log 2>&1 &
+if ! check_port 8080; then
+    ng serve --host 0.0.0.0 --port 8080 --disable-host-check > ../logs/frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > ../logs/frontend.pid
     echo "✅ Frontend iniciado (PID: $FRONTEND_PID)"
 else
-    echo "⚠️  Frontend já está rodando na porta 4200"
+    echo "⚠️  Frontend já está rodando na porta 8080"
 fi
 cd ..
 
 # Aguardar frontend ficar disponível
-wait_for_port 4200 "Frontend"
+wait_for_port 8080 "Frontend"
 
 echo ""
 echo "🎉 Sistema LeadPro iniciado com sucesso!"
 echo ""
 echo "📊 URLs de acesso:"
-echo "   Frontend: http://191.96.251.155:4200"
-echo "   Backend API: http://191.96.251.155:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 echo ""
 echo "🌐 URLs externas (acessíveis de qualquer dispositivo):"
-echo "   Frontend: http://191.96.251.155:4200"
-echo "   Backend API: http://191.96.251.155:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 echo ""
 echo "🔐 Credenciais de acesso:"
 echo "   Usuário: admin"

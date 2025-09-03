@@ -4,18 +4,22 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
+const config = require('../config');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Define porta baseada na configuração
+const isManualMode = config.manual.enabled;
+const PORT = isManualMode ? config.manual.backend.port : config.deploy.backend.port;
 
 // Configuração do banco de dados PostgreSQL
 const pool = new Pool({
-  host: process.env.DB_HOST || '191.96.251.155',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'n8n',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'MICROazu9107@#',
+  host: config.database.host,
+  port: config.database.port,
+  database: config.database.name,
+  user: config.database.user,
+  password: config.database.password,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -31,21 +35,22 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// CORS
+// CORS - Configuração dinâmica baseada no modo de execução
+const frontendPort = isManualMode ? config.manual.frontend.port : config.deploy.frontend.port;
+const frontendHost = isManualMode ? config.manual.vmIp : 'localhost';
+
 app.use(cors({
   origin: [
-    'http://localhost:4200', 
-    'http://127.0.0.1:4200',
-    'http://191.96.251.155:4200',
-    'http://191.96.251.155'
+    `http://localhost:${frontendPort}`,
+    `http://127.0.0.1:${frontendPort}`,
+    `http://${frontendHost}:${frontendPort}`,
+    `http://${frontendHost}`
   ],
   credentials: true
 }));
 
-// Middleware para parsing JSON
 app.use(express.json());
 
-// Teste de conexão com o banco
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Erro ao conectar ao banco de dados:', err);
@@ -54,12 +59,10 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 });
 
-// Rotas de autenticação
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, senha } = req.body;
     
-    // Busca usuário no banco
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1 AND ativo = true',
       [email]
@@ -74,10 +77,8 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = result.rows[0];
     
-    // Verifica senha usando bcrypt
     const isPasswordValid = await bcrypt.compare(senha, user.senha);
     if (isPasswordValid || (senha === '123@mudar' && email === 'admin')) {
-      // Remove senha do objeto retornado
       delete user.senha;
       
       res.json({
@@ -107,7 +108,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Rotas de leads
 app.get('/api/leads', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -119,7 +119,6 @@ app.get('/api/leads', async (req, res) => {
       ORDER BY data_criacao DESC
     `);
     
-    // Mapear campos do banco para o frontend
     const mappedLeads = result.rows.map(lead => ({
       id: lead.id,
       nome: lead.nome,
@@ -726,6 +725,6 @@ app.use('*', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📊 API disponível em: http://191.96.251.155:${PORT}/api`);
-  console.log(`🌐 Acessível externamente em: http://191.96.251.155:${PORT}/api`);
+  console.log(`📊 API disponível em: http://localhost:${PORT}/api`);
+console.log(`🌐 Acessível externamente em: http://localhost:${PORT}/api`);
 });

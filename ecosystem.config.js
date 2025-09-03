@@ -10,21 +10,21 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'development',
-        PORT: 3000,
-        DB_HOST: '191.96.251.155',
+        PORT: 5000,
+        DB_HOST: 'localhost',
         DB_PORT: 5432,
-        DB_NAME: 'n8n',
+        DB_NAME: 'leadpro',
         DB_USER: 'postgres',
-        DB_PASSWORD: 'MICROazu9107@#'
+        DB_PASSWORD: 'password'
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000,
-        DB_HOST: '191.96.251.155',
+        PORT: 5000,
+        DB_HOST: 'localhost',
         DB_PORT: 5432,
-        DB_NAME: 'n8n',
+        DB_NAME: 'leadpro',
         DB_USER: 'postgres',
-        DB_PASSWORD: 'MICROazu9107@#'
+        DB_PASSWORD: 'password'
       },
       error_file: './logs/backend-error.log',
       out_file: './logs/backend-out.log',
@@ -35,7 +35,7 @@ module.exports = {
       name: 'leadpro-frontend',
       script: 'ng',
       cwd: './web',
-      args: 'serve --configuration=production --host 0.0.0.0 --port 4200 --disable-host-check',
+      args: 'serve --configuration=production --host 0.0.0.0 --port 8080 --disable-host-check',
       instances: 1,
       autorestart: true,
       watch: false,

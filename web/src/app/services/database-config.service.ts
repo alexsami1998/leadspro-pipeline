@@ -18,7 +18,7 @@ export class DatabaseConfigService {
   // Configuração padrão do PostgreSQL
   getDefaultConfig(): DatabaseConfig {
     return {
-      host: '191.96.251.155',
+      host: 'localhost',
       port: 5432,
       database: 'n8n',
       username: 'postgres',

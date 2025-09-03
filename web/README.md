@@ -62,7 +62,7 @@ O sistema requer um backend para operações de banco de dados. Crie um servidor
 ng serve
 ```
 
-Acesse `http://localhost:4200`
+Acesse `http://localhost:8080`
 
 ## 🔧 Configuração Inicial
 

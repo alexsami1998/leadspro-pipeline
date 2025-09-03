@@ -1,261 +1,140 @@
-<<<<<<< HEAD
-# leadpro
-=======
-# 🚀 LeadPro - Sistema de Gestão de Leads
+# LeadPro - Sistema de Gestão de Leads
 
 Sistema completo de gestão de leads desenvolvido em Angular com backend Node.js e banco PostgreSQL.
 
-## 📋 Pré-requisitos
+**Propriedade exclusiva de MW Soluções**
 
-- **Node.js** (versão 16 ou superior)
-- **npm** ou **yarn**
-- **Angular CLI** (`npm install -g @angular/cli`)
-- **PostgreSQL** (versão 12 ou superior)
-- **Acesso ao banco de dados** (credenciais configuradas)
+## Visão Geral
 
-## 🗄️ Configuração do Banco de Dados
+O LeadPro é uma solução robusta para gestão de leads e oportunidades de negócio, oferecendo funcionalidades completas de CRM com interface moderna e responsiva.
 
-### 1. Executar o Script SQL
+## Arquitetura
 
-Execute o arquivo `web/leadpro_database.sql` no seu banco PostgreSQL:
+- **Frontend**: Angular 17+ com TypeScript
+- **Backend**: Node.js com Express
+- **Banco**: PostgreSQL
+- **Portas**: Frontend (8080), Backend (5000)
 
-```bash
-psql -h 191.96.251.155 -U postgres -d n8n -f web/leadpro_database.sql
-```
+## Pré-requisitos
 
-**Credenciais do banco:**
-- **Host**: 191.96.251.155
-- **Database**: n8n
-- **User**: postgres
-- **Password**: MICROazu9107@#
+- Node.js 18+
+- PostgreSQL 12+
+- npm ou yarn
 
-### 2. Verificar Tabelas Criadas
+## Configuração
 
-O script criará as seguintes tabelas:
-- `users` - Usuários do sistema
-- `leads` - Leads e oportunidades
-- `interactions` - Histórico de interações
-- `webhooks` - Configurações de webhooks
-
-## 🚀 Inicialização Rápida
-
-### Opção 1: Script Automático (Recomendado)
+### 1. Instalação de Dependências
 
 ```bash
-# Iniciar todo o sistema
-./start-system.sh
-
-# Parar o sistema
-./stop-system.sh
-```
-
-### Opção 2: Inicialização Manual
-
-#### 1. Iniciar Backend
-```bash
+# Backend
 cd backend
 npm install
-node server.js
-```
 
-#### 2. Iniciar Frontend
-```bash
+# Frontend
 cd web
 npm install
-ng serve --host 0.0.0.0 --port 4200
 ```
 
-## 🌐 URLs de Acesso
+### 2. Configuração do Banco
 
-- **Frontend**: http://localhost:4200
-- **Backend API**: http://localhost:3000/api
-- **Health Check**: http://localhost:3000/api/health
+Execute o script de inicialização:
+```bash
+psql -h localhost -U postgres -d leadpro -f web/leadpro_database.sql
+```
 
-## 🔐 Credenciais de Acesso
+### 3. Configuração de Ambiente
 
-- **Usuário**: `admin`
-- **Senha**: `123@mudar`
+Edite o arquivo `config.js` na raiz do projeto:
+- Para deploy automatizado: mantenha `manual.enabled = false`
+- Para execução manual: altere `manual.enabled = true` e configure `vmIp`
 
-## 📊 Funcionalidades
+## Execução
 
-### Dashboard
-- Estatísticas de leads por status
-- Gráficos de conversão
-- Leads recentes
-- Métricas de performance
+### Modo Deploy (Jenkins, Docker, etc.)
+```bash
+./start-system.sh
+```
+
+### Modo Manual
+```bash
+# Backend
+cd backend
+node server.js
+
+# Frontend
+cd web
+ng serve --port 8080
+```
+
+## Funcionalidades
 
 ### Gestão de Leads
-- ✅ **Criar** novos leads
-- ✅ **Listar** todos os leads com filtros
-- ✅ **Editar** informações dos leads
-- ✅ **Excluir** leads
-- ✅ **Atualizar status** dos leads
-- ✅ **Registrar interações** com leads
-- ✅ **Integração WhatsApp** direta
-- ✅ **Busca e filtros** avançados
+- Criação e edição de leads
+- Controle de status e pipeline
+- Histórico de interações
+- Integração WhatsApp
+- Filtros e busca avançada
 
-### Sistema de Status
-- **NOVO_LEAD** → **LEAD_QUALIFICADO** → **INTERESSE** → **PROPOSTA_ACEITA** → **IMPLANTADO** → **FATURADO**
+### Dashboard
+- Métricas de performance
+- Gráficos de conversão
+- Leads por status
+- Estatísticas por fonte
 
-### Permissões
-- **Admin**: Acesso total (criar, editar, excluir, ver valores)
-- **Usuário**: Acesso limitado (visualizar, algumas edições)
+### Sistema de Usuários
+- Controle de acesso
+- Perfis de permissão
+- Auditoria de ações
 
-## 🛠️ Estrutura do Projeto
+### Webhooks
+- Integração com sistemas externos
+- Configuração de eventos
+- Filtros de dados
+
+## Estrutura do Projeto
 
 ```
 leadpro/
-├── backend/                 # Servidor Node.js
-│   ├── server.js           # Servidor principal
-│   ├── package.json        # Dependências do backend
-│   └── start-backend.sh    # Script de inicialização
-├── web/                    # Frontend Angular
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── components/ # Componentes reutilizáveis
-│   │   │   ├── pages/      # Páginas do sistema
-│   │   │   ├── services/   # Serviços de API
-│   │   │   └── models/     # Modelos de dados
-│   │   └── ...
-│   ├── package.json        # Dependências do frontend
-│   └── leadpro_database.sql # Script de criação do banco
-├── logs/                   # Logs do sistema
-├── start-system.sh         # Script de inicialização completa
-├── stop-system.sh          # Script de parada
-└── README.md              # Este arquivo
+├── backend/           # Servidor Node.js
+├── web/              # Frontend Angular
+├── config.js         # Configurações do sistema
+├── prisma/           # Schema do banco
+└── scripts/          # Scripts de automação
 ```
 
-## 🔧 Configurações
+## API Endpoints
 
-### Variáveis de Ambiente
-
-O backend usa as seguintes configurações (hardcoded para simplicidade):
-- **DB_HOST**: 191.96.251.155
-- **DB_PORT**: 5432
-- **DB_NAME**: n8n
-- **DB_USER**: postgres
-- **DB_PASS**: MICROazu9107@#
-
-### API Endpoints
-
-#### Autenticação
+### Autenticação
 - `POST /api/auth/login` - Login de usuário
 
-#### Leads
-- `GET /api/leads` - Listar todos os leads
-- `GET /api/leads/:id` - Buscar lead específico
-- `POST /api/leads` - Criar novo lead
+### Leads
+- `GET /api/leads` - Listar leads
+- `POST /api/leads` - Criar lead
 - `PUT /api/leads/:id` - Atualizar lead
 - `DELETE /api/leads/:id` - Excluir lead
 
-#### Interações
-- `GET /api/leads/:id/interactions` - Listar interações de um lead
-- `POST /api/interactions` - Criar nova interação
+### Dashboard
+- `GET /api/dashboard/stats` - Estatísticas
 
-#### Dashboard
-- `GET /api/dashboard/stats` - Estatísticas do dashboard
+## Configurações de Segurança
 
-## 🐛 Troubleshooting
-
-### Problemas Comuns
-
-#### 1. Backend não inicia
-```bash
-# Verificar se a porta 3000 está livre
-lsof -i :3000
-
-# Verificar logs
-tail -f logs/backend.log
-```
-
-#### 2. Frontend não inicia
-```bash
-# Verificar se a porta 4200 está livre
-lsof -i :4200
-
-# Verificar logs
-tail -f logs/frontend.log
-```
-
-#### 3. Erro de conexão com banco
-```bash
-# Testar conexão
-psql -h 191.96.251.155 -U postgres -d n8n -c "SELECT 1;"
-```
-
-#### 4. Dados não aparecem
-- Verificar se o banco foi inicializado corretamente
-- Verificar se as tabelas existem
-- Verificar logs do backend para erros de SQL
-
-### Logs
-
-Os logs estão disponíveis em:
-- **Backend**: `logs/backend.log`
-- **Frontend**: `logs/frontend.log`
-
-## 📝 Desenvolvimento
-
-### Adicionar Novas Funcionalidades
-
-1. **Backend**: Adicionar rotas em `backend/server.js`
-2. **Frontend**: Criar componentes em `web/src/app/`
-3. **Modelos**: Atualizar interfaces em `web/src/app/models/`
-
-### Estrutura de Dados
-
-#### Lead
-```typescript
-interface Lead {
-  id: number;
-  nome: string;
-  email: string;
-  telefone: string;
-  empresa?: string;
-  cargo?: string;
-  fonte: string;
-  status: string;
-  valorContrato?: number;
-  observacoes?: string;
-  dataCriacao: Date;
-  dataAtualizacao: Date;
-  usuarioCriacao?: string;
-  usuarioAtualizacao?: string;
-}
-```
-
-## 🔒 Segurança
-
-- Autenticação via banco de dados
-- Rate limiting na API
+- Autenticação via banco
+- Rate limiting
 - CORS configurado
-- Headers de segurança com Helmet
+- Headers de segurança
 - Validação de entrada
 
-## 📈 Performance
+## Monitoramento
 
-- Índices otimizados no banco
-- Lazy loading de componentes
-- Compressão de resposta
-- Cache de consultas
+- Logs estruturados
+- Health checks
+- Métricas de performance
+- Tratamento de erros
 
-## 🤝 Contribuição
+## Suporte
 
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT.
-
-## 📞 Suporte
-
-Para suporte, entre em contato através dos canais oficiais do projeto.
+Para suporte técnico, entre em contato com a equipe de desenvolvimento da MW Soluções.
 
 ---
 
-**LeadPro** - Transformando leads em clientes! 🎯
->>>>>>> b08f650 (updt: geral commits)
+**LeadPro** - Transformando leads em resultados

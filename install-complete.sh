@@ -2,7 +2,7 @@
 
 echo "🚀 Instalação Completa do Sistema LeadPro"
 echo "=========================================="
-echo "🌐 Configurando para acesso externo via IP: 191.96.251.155"
+echo "🌐 Configurando para acesso externo via IP: localhost"
 echo ""
 
 # Cores para output
@@ -105,10 +105,10 @@ echo "1. Iniciar o sistema: ./start-pm2.sh"
 echo "2. Ou usar modo tradicional: ./start-system.sh"
 echo ""
 echo "🌐 URLs de acesso:"
-echo "   Frontend: http://191.96.251.155:4200"
-echo "   Backend API: http://191.96.251.155:3000/api"
+echo "   Frontend: http://localhost:8080"
+echo "   Backend API: http://localhost:5000/api"
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "   Com Nginx: http://191.96.251.155"
+    echo "   Com Nginx: http://localhost"
 fi
 echo ""
 echo "🔐 Credenciais: admin / 123@mudar"

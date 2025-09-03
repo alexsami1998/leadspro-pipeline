@@ -75,13 +75,13 @@
             "production": {
               "buildTarget": "web:build:production",
               "host": "0.0.0.0",
-              "port": 4200,
+              "port": 8080,
               "disableHostCheck": true
             },
             "development": {
               "buildTarget": "web:build:development",
               "host": "0.0.0.0",
-              "port": 4200,
+              "port": 8080,
               "disableHostCheck": true
             }
           },
