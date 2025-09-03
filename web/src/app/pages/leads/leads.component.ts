@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LeadService } from '../../services/lead.service';
 import { AuthService } from '../../services/auth.service';
-import { Lead, LeadStatus, LeadSource, Interaction, InteractionType } from '../../models/lead.model';
+import { Lead, LeadStatus, LeadSource, Interaction, InteractionType, LeadProduct, ProductName } from '../../models/lead.model';
 
 @Component({
   selector: 'app-leads',
@@ -30,11 +30,17 @@ export class LeadsComponent implements OnInit {
   newLead: Partial<Lead> = {};
   editLead: Lead | null = null;
   newInteraction: Partial<Interaction> = {};
+  
+  // Product management
+  newLeadProducts: LeadProduct[] = [];
+  editLeadProducts: LeadProduct[] = [];
+  availableProducts = Object.values(ProductName);
 
   // Enums para o template
   LeadStatus = LeadStatus;
   LeadSource = LeadSource;
   InteractionType = InteractionType;
+  ProductName = ProductName;
   Object = Object;
 
   constructor(
@@ -68,12 +74,20 @@ export class LeadsComponent implements OnInit {
       return;
     }
 
-    this.leadService.createLead(this.newLead as Omit<Lead, 'id' | 'dataCriacao' | 'dataAtualizacao'>).subscribe({
+    const leadData = {
+      ...this.newLead,
+      produtos: this.newLeadProducts,
+      descontoGeral: this.newLead.descontoGeral || 0,
+      valorTotal: this.newLead.valorTotal || 0
+    };
+
+    this.leadService.createLead(leadData as Omit<Lead, 'id' | 'dataCriacao' | 'dataAtualizacao'>).subscribe({
       next: (lead) => {
         this.leads.unshift(lead);
         this.filterLeads();
         this.showCreateModal = false;
         this.newLead = {};
+        this.newLeadProducts = [];
         alert('Lead criado com sucesso!');
       },
       error: (error) => {
@@ -86,7 +100,14 @@ export class LeadsComponent implements OnInit {
   updateLead(): void {
     if (!this.editLead?.id) return;
 
-    this.leadService.updateLead(this.editLead.id, this.editLead).subscribe({
+    const leadData = {
+      ...this.editLead,
+      produtos: this.editLeadProducts,
+      descontoGeral: this.editLead.descontoGeral || 0,
+      valorTotal: this.editLead.valorTotal || 0
+    };
+
+    this.leadService.updateLead(this.editLead.id, leadData).subscribe({
       next: (lead) => {
         const index = this.leads.findIndex(l => l.id === lead.id);
         if (index !== -1) {
@@ -95,6 +116,7 @@ export class LeadsComponent implements OnInit {
         }
         this.showEditModal = false;
         this.editLead = null;
+        this.editLeadProducts = [];
         alert('Lead atualizado com sucesso!');
       },
       error: (error) => {
@@ -204,12 +226,16 @@ export class LeadsComponent implements OnInit {
     this.showCreateModal = true;
     this.newLead = {
       status: LeadStatus.NOVO_LEAD,
-      fonte: LeadSource.INDICACAO
+      fonte: LeadSource.INDICACAO,
+      descontoGeral: 0,
+      valorTotal: 0
     };
+    this.newLeadProducts = [];
   }
 
   openEditModal(lead: Lead): void {
     this.editLead = { ...lead };
+    this.editLeadProducts = lead.produtos ? [...lead.produtos] : [];
     this.showEditModal = true;
     this.activeTab = 'details';
     if (lead.id) {
@@ -235,6 +261,8 @@ export class LeadsComponent implements OnInit {
     this.selectedLead = null;
     this.activeTab = 'details';
     this.leadInteractions = [];
+    this.newLeadProducts = [];
+    this.editLeadProducts = [];
   }
 
   // Load lead interactions
@@ -331,6 +359,97 @@ export class LeadsComponent implements OnInit {
   // WhatsApp Integration
   openWhatsApp(lead: Lead): void {
     this.leadService.openWhatsApp(lead);
+  }
+
+  // Product Management Methods
+  addProductToNewLead(): void {
+    if (this.newLeadProducts.length < 6) {
+      this.newLeadProducts.push({
+        nome: ProductName.EASYMAPS,
+        valor: 0,
+        desconto: 0,
+        valorFinal: 0
+      });
+    }
+  }
+
+  addProductToEditLead(): void {
+    if (this.editLeadProducts.length < 6) {
+      this.editLeadProducts.push({
+        nome: ProductName.EASYMAPS,
+        valor: 0,
+        desconto: 0,
+        valorFinal: 0
+      });
+    }
+  }
+
+  removeProductFromNewLead(index: number): void {
+    this.newLeadProducts.splice(index, 1);
+    this.calculateNewLeadTotal();
+  }
+
+  removeProductFromEditLead(index: number): void {
+    this.editLeadProducts.splice(index, 1);
+    this.calculateEditLeadTotal();
+  }
+
+  onProductChangeNewLead(index: number): void {
+    this.calculateProductFinalValue(this.newLeadProducts[index]);
+    this.calculateNewLeadTotal();
+  }
+
+  onProductChangeEditLead(index: number): void {
+    this.calculateProductFinalValue(this.editLeadProducts[index]);
+    this.calculateEditLeadTotal();
+  }
+
+  onDescontoGeralChangeNewLead(): void {
+    this.calculateNewLeadTotal();
+  }
+
+  onDescontoGeralChangeEditLead(): void {
+    this.calculateEditLeadTotal();
+  }
+
+  private calculateProductFinalValue(product: LeadProduct): void {
+    product.valorFinal = product.valor - product.desconto;
+  }
+
+  private calculateNewLeadTotal(): void {
+    let total = this.newLeadProducts.reduce((sum, product) => sum + product.valorFinal, 0);
+    if (this.newLead.descontoGeral) {
+      total -= this.newLead.descontoGeral;
+    }
+    this.newLead.valorTotal = Math.max(0, total);
+  }
+
+  private calculateEditLeadTotal(): void {
+    let total = this.editLeadProducts.reduce((sum, product) => sum + product.valorFinal, 0);
+    if (this.editLead?.descontoGeral) {
+      total -= this.editLead.descontoGeral;
+    }
+    if (this.editLead) {
+      this.editLead.valorTotal = Math.max(0, total);
+    }
+  }
+
+  getProductLabel(productName: string): string {
+    return productName;
+  }
+
+  getAvailableProductsForNewLead(index: number): ProductName[] {
+    const usedProducts = this.newLeadProducts
+      .map((p, i) => i !== index ? p.nome : null)
+      .filter(p => p !== null);
+    return this.availableProducts.filter(p => !usedProducts.includes(p));
+  }
+
+  getAvailableProductsForEditLead(index: number): ProductName[] {
+    const usedProducts = this.editLeadProducts
+      .map((p, i) => i !== index ? p.nome : null)
+      .filter(p => p !== null);
+    return this.availableProducts.filter(p => !usedProducts.includes(p));
   }
 }
 

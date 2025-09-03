@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStage {
+  ENTRADA
+  QUALIFICACAO
+  INTERESSE
+  APRESENTACAO
+  PROPOSTA
+  CRIACAO_DO_GRUPO
+  IMPLANTACAO
+  CADASTRO_E_COBRANCA
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  interactions Interaction[]
+
+  @@map("users")
+}
+
+model Lead {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
+  source         String?
+  company        String?
+  notes          String?
+  contractValue  Decimal?  @map("contract_value") @db.Decimal(12, 2)
+  canViewValue   Boolean   @default(true) @map("can_view_value")
+  stage          LeadStage @default(ENTRADA)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  interactions Interaction[]
+
+  @@map("leads")
+}
+
+model Interaction {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  leadId    String   @map("lead_id")
+  userId    String?  @map("user_id")
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("interactions")
+}
+
+model Webhook {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("webhooks")
+}

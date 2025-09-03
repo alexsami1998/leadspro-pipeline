@@ -30,12 +30,12 @@ const config = {
   
   // Configuração do banco de dados
   database: {
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '72.60.144.80',
     port: process.env.DB_PORT || 5432,
-    name: process.env.DB_NAME || 'leadpro',
+    name: process.env.DB_NAME || 'pipeline',
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'password'
+    password: process.env.DB_PASSWORD || 'DEv019107'
   }
 };
 
-module.exports = config;
+export default config;

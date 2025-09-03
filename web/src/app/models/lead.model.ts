@@ -9,10 +9,31 @@ export interface Lead {
   status: LeadStatus;
   valorContrato?: number;
   observacoes?: string;
+  produtos?: LeadProduct[];
+  descontoGeral?: number;
+  valorTotal?: number;
   dataCriacao: Date;
   dataAtualizacao: Date;
   usuarioCriacao?: string;
   usuarioAtualizacao?: string;
+}
+
+export interface LeadProduct {
+  id?: number;
+  leadId?: number;
+  nome: ProductName;
+  valor: number;
+  desconto: number;
+  valorFinal: number;
+}
+
+export enum ProductName {
+  EASYMAPS = 'EasyMaps',
+  EASYFLOW = 'EasyFlow',
+  EASYLOGS = 'EasyLogs',
+  EASYREPORT = 'EasyReport',
+  EASYMON = 'EasyMon',
+  EASYBI = 'EasyBI'
 }
 
 export enum LeadSource {

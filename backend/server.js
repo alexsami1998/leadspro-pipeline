@@ -1,11 +1,13 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
-const config = require('../config');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
+import config from '../config.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
@@ -113,27 +115,47 @@ app.get('/api/leads', async (req, res) => {
     const result = await pool.query(`
       SELECT 
         id, nome, email, telefone, empresa, cargo, fonte, status,
-        valor_contrato, observacoes, data_criacao, data_atualizacao,
-        usuario_criacao, usuario_atualizacao
+        valor_contrato, observacoes, desconto_geral, valor_total,
+        data_criacao, data_atualizacao, usuario_criacao, usuario_atualizacao
       FROM leads 
       ORDER BY data_criacao DESC
     `);
     
-    const mappedLeads = result.rows.map(lead => ({
-      id: lead.id,
-      nome: lead.nome,
-      email: lead.email,
-      telefone: lead.telefone,
-      empresa: lead.empresa,
-      cargo: lead.cargo,
-      fonte: lead.fonte,
-      status: lead.status,
-      valorContrato: lead.valor_contrato,
-      observacoes: lead.observacoes,
-      dataCriacao: lead.data_criacao,
-      dataAtualizacao: lead.data_atualizacao,
-      usuarioCriacao: lead.usuario_criacao,
-      usuarioAtualizacao: lead.usuario_atualizacao
+    const mappedLeads = await Promise.all(result.rows.map(async (lead) => {
+      // Buscar produtos do lead
+      const produtosResult = await pool.query(
+        'SELECT id, nome, valor, desconto, valor_final FROM lead_products WHERE lead_id = $1 ORDER BY id',
+        [lead.id]
+      );
+      
+      const produtos = produtosResult.rows.map(produto => ({
+        id: produto.id,
+        leadId: lead.id,
+        nome: produto.nome,
+        valor: parseFloat(produto.valor),
+        desconto: parseFloat(produto.desconto),
+        valorFinal: parseFloat(produto.valor_final)
+      }));
+      
+      return {
+        id: lead.id,
+        nome: lead.nome,
+        email: lead.email,
+        telefone: lead.telefone,
+        empresa: lead.empresa,
+        cargo: lead.cargo,
+        fonte: lead.fonte,
+        status: lead.status,
+        valorContrato: lead.valor_contrato,
+        observacoes: lead.observacoes,
+        produtos: produtos,
+        descontoGeral: lead.desconto_geral ? parseFloat(lead.desconto_geral) : 0,
+        valorTotal: lead.valor_total ? parseFloat(lead.valor_total) : 0,
+        dataCriacao: lead.data_criacao,
+        dataAtualizacao: lead.data_atualizacao,
+        usuarioCriacao: lead.usuario_criacao,
+        usuarioAtualizacao: lead.usuario_atualizacao
+      };
     }));
     
     res.json(mappedLeads);
@@ -163,22 +185,68 @@ app.get('/api/leads/:id', async (req, res) => {
 });
 
 app.post('/api/leads', async (req, res) => {
+  const client = await pool.connect();
+  
   try {
+    await client.query('BEGIN');
+    
     const {
       nome, email, telefone, empresa, cargo, fonte, status,
-      valorContrato, observacoes, usuarioCriacao
+      valorContrato, observacoes, usuarioCriacao, produtos, descontoGeral
     } = req.body;
 
-    const result = await pool.query(`
+    // Calcular valor total dos produtos
+    let valorTotal = 0;
+    if (produtos && produtos.length > 0) {
+      valorTotal = produtos.reduce((total, produto) => {
+        const valorFinal = produto.valor - produto.desconto;
+        return total + valorFinal;
+      }, 0);
+      
+      // Aplicar desconto geral
+      if (descontoGeral && descontoGeral > 0) {
+        valorTotal = valorTotal - descontoGeral;
+      }
+    }
+
+    const result = await client.query(`
       INSERT INTO leads (
         nome, email, telefone, empresa, cargo, fonte, status,
-        valor_contrato, observacoes, usuario_criacao
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        valor_contrato, observacoes, usuario_criacao, desconto_geral, valor_total
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
-    `, [nome, email, telefone, empresa, cargo, fonte, status, valorContrato, observacoes, usuarioCriacao]);
+    `, [nome, email, telefone, empresa, cargo, fonte, status, valorContrato, observacoes, usuarioCriacao, descontoGeral || 0, valorTotal]);
 
-    // Mapear campos do banco para o frontend
     const lead = result.rows[0];
+    
+    // Inserir produtos se existirem
+    if (produtos && produtos.length > 0) {
+      for (const produto of produtos) {
+        const valorFinal = produto.valor - produto.desconto;
+        await client.query(`
+          INSERT INTO lead_products (lead_id, nome, valor, desconto, valor_final)
+          VALUES ($1, $2, $3, $4, $5)
+        `, [lead.id, produto.nome, produto.valor, produto.desconto, valorFinal]);
+      }
+    }
+
+    await client.query('COMMIT');
+
+    // Buscar produtos inseridos para retornar
+    const produtosResult = await pool.query(
+      'SELECT id, nome, valor, desconto, valor_final FROM lead_products WHERE lead_id = $1 ORDER BY id',
+      [lead.id]
+    );
+    
+    const produtosInseridos = produtosResult.rows.map(produto => ({
+      id: produto.id,
+      leadId: lead.id,
+      nome: produto.nome,
+      valor: parseFloat(produto.valor),
+      desconto: parseFloat(produto.desconto),
+      valorFinal: parseFloat(produto.valor_final)
+    }));
+
     const mappedLead = {
       id: lead.id,
       nome: lead.nome,
@@ -190,6 +258,9 @@ app.post('/api/leads', async (req, res) => {
       status: lead.status,
       valorContrato: lead.valor_contrato,
       observacoes: lead.observacoes,
+      produtos: produtosInseridos,
+      descontoGeral: lead.desconto_geral ? parseFloat(lead.desconto_geral) : 0,
+      valorTotal: lead.valor_total ? parseFloat(lead.valor_total) : 0,
       dataCriacao: lead.data_criacao,
       dataAtualizacao: lead.data_atualizacao,
       usuarioCriacao: lead.usuario_criacao,
@@ -198,13 +269,20 @@ app.post('/api/leads', async (req, res) => {
 
     res.status(201).json(mappedLead);
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Erro ao criar lead:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  } finally {
+    client.release();
   }
 });
 
 app.put('/api/leads/:id', async (req, res) => {
+  const client = await pool.connect();
+  
   try {
+    await client.query('BEGIN');
+    
     const { id } = req.params;
     const updates = req.body;
     
@@ -221,6 +299,25 @@ app.put('/api/leads/:id', async (req, res) => {
     if (updates.valorContrato !== undefined) mappedUpdates.valor_contrato = updates.valorContrato;
     if (updates.observacoes !== undefined) mappedUpdates.observacoes = updates.observacoes;
     if (updates.usuarioAtualizacao !== undefined) mappedUpdates.usuario_atualizacao = updates.usuarioAtualizacao;
+    if (updates.descontoGeral !== undefined) mappedUpdates.desconto_geral = updates.descontoGeral;
+    
+    // Calcular valor total se produtos foram fornecidos
+    if (updates.produtos !== undefined) {
+      let valorTotal = 0;
+      if (updates.produtos && updates.produtos.length > 0) {
+        valorTotal = updates.produtos.reduce((total, produto) => {
+          const valorFinal = produto.valor - produto.desconto;
+          return total + valorFinal;
+        }, 0);
+        
+        // Aplicar desconto geral
+        const descontoGeral = updates.descontoGeral || 0;
+        if (descontoGeral > 0) {
+          valorTotal = valorTotal - descontoGeral;
+        }
+      }
+      mappedUpdates.valor_total = valorTotal;
+    }
     
     const fields = Object.keys(mappedUpdates);
     
@@ -232,11 +329,46 @@ app.put('/api/leads/:id', async (req, res) => {
     const query = `UPDATE leads SET ${setClause}, data_atualizacao = NOW() WHERE id = $1 RETURNING *`;
     
     const values = Object.values(mappedUpdates);
-    const result = await pool.query(query, [id, ...values]);
+    const result = await client.query(query, [id, ...values]);
     
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Lead não encontrado' });
     }
+    
+    // Atualizar produtos se fornecidos
+    if (updates.produtos !== undefined) {
+      // Remover produtos existentes
+      await client.query('DELETE FROM lead_products WHERE lead_id = $1', [id]);
+      
+      // Inserir novos produtos
+      if (updates.produtos && updates.produtos.length > 0) {
+        for (const produto of updates.produtos) {
+          const valorFinal = produto.valor - produto.desconto;
+          await client.query(`
+            INSERT INTO lead_products (lead_id, nome, valor, desconto, valor_final)
+            VALUES ($1, $2, $3, $4, $5)
+          `, [id, produto.nome, produto.valor, produto.desconto, valorFinal]);
+        }
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    // Buscar produtos atualizados
+    const produtosResult = await pool.query(
+      'SELECT id, nome, valor, desconto, valor_final FROM lead_products WHERE lead_id = $1 ORDER BY id',
+      [id]
+    );
+    
+    const produtos = produtosResult.rows.map(produto => ({
+      id: produto.id,
+      leadId: parseInt(id),
+      nome: produto.nome,
+      valor: parseFloat(produto.valor),
+      desconto: parseFloat(produto.desconto),
+      valorFinal: parseFloat(produto.valor_final)
+    }));
     
     // Mapear campos do banco para o frontend
     const lead = result.rows[0];
@@ -251,6 +383,9 @@ app.put('/api/leads/:id', async (req, res) => {
       status: lead.status,
       valorContrato: lead.valor_contrato,
       observacoes: lead.observacoes,
+      produtos: produtos,
+      descontoGeral: lead.desconto_geral ? parseFloat(lead.desconto_geral) : 0,
+      valorTotal: lead.valor_total ? parseFloat(lead.valor_total) : 0,
       dataCriacao: lead.data_criacao,
       dataAtualizacao: lead.data_atualizacao,
       usuarioCriacao: lead.usuario_criacao,
@@ -259,8 +394,11 @@ app.put('/api/leads/:id', async (req, res) => {
     
     res.json(mappedLead);
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Erro ao atualizar lead:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  } finally {
+    client.release();
   }
 });
 

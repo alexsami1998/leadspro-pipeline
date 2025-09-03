@@ -100,6 +100,14 @@
             <span class="label">Valor:</span>
             <span class="value">{{ formatCurrency(lead.valorContrato) }}</span>
           </div>
+          <div class="detail-row" *ngIf="lead.produtos && lead.produtos.length > 0">
+            <span class="label">Produtos:</span>
+            <span class="value">{{ lead.produtos.length }} produto(s)</span>
+          </div>
+          <div class="detail-row" *ngIf="lead.valorTotal && lead.valorTotal > 0">
+            <span class="label">Valor Total:</span>
+            <span class="value total-value">{{ formatCurrency(lead.valorTotal) }}</span>
+          </div>
         </div>
 
         <div class="lead-status">
@@ -194,6 +202,62 @@
           <div class="form-group">
             <label for="observacoes">Observações</label>
             <textarea id="observacoes" [(ngModel)]="newLead.observacoes" name="observacoes" rows="3" class="form-input"></textarea>
+          </div>
+
+          <!-- Seção de Produtos -->
+          <div class="products-section">
+            <div class="section-header">
+              <h3>Produtos</h3>
+              <button type="button" (click)="addProductToNewLead()" class="btn btn-outline btn-sm" [disabled]="newLeadProducts.length >= 6">
+                ➕ Adicionar Produto
+              </button>
+            </div>
+
+            <div class="products-list" *ngIf="newLeadProducts.length > 0">
+              <div class="product-item" *ngFor="let product of newLeadProducts; let i = index">
+                <div class="product-row">
+                  <div class="form-group">
+                    <label>Produto</label>
+                    <select [(ngModel)]="product.nome" (change)="onProductChangeNewLead(i)" class="form-input">
+                      <option *ngFor="let availableProduct of getAvailableProductsForNewLead(i)" [value]="availableProduct">
+                        {{ getProductLabel(availableProduct) }}
+                      </option>
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Valor</label>
+                    <input type="number" [(ngModel)]="product.valor" (input)="onProductChangeNewLead(i)" step="0.01" min="0" class="form-input">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Desconto</label>
+                    <input type="number" [(ngModel)]="product.desconto" (input)="onProductChangeNewLead(i)" step="0.01" min="0" class="form-input">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>Valor Final</label>
+                    <input type="number" [value]="product.valorFinal" readonly class="form-input readonly">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button type="button" (click)="removeProductFromNewLead(i)" class="btn btn-danger btn-sm">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" *ngIf="newLeadProducts.length > 0">
+              <label for="descontoGeral">Desconto Geral</label>
+              <input type="number" id="descontoGeral" [(ngModel)]="newLead.descontoGeral" (input)="onDescontoGeralChangeNewLead()" name="descontoGeral" step="0.01" min="0" class="form-input">
+            </div>
+
+            <div class="total-section" *ngIf="newLeadProducts.length > 0">
+              <div class="total-display">
+                <strong>Valor Total: {{ formatCurrency(newLead.valorTotal || 0) }}</strong>
+              </div>
+            </div>
           </div>
 
           <div class="modal-actions">
@@ -292,6 +356,62 @@
             <div class="form-group">
               <label for="edit-observacoes">Observações</label>
               <textarea id="edit-observacoes" [(ngModel)]="editLead.observacoes" name="observacoes" rows="3" class="form-input"></textarea>
+            </div>
+
+            <!-- Seção de Produtos -->
+            <div class="products-section">
+              <div class="section-header">
+                <h3>Produtos</h3>
+                <button type="button" (click)="addProductToEditLead()" class="btn btn-outline btn-sm" [disabled]="editLeadProducts.length >= 6">
+                  ➕ Adicionar Produto
+                </button>
+              </div>
+
+              <div class="products-list" *ngIf="editLeadProducts.length > 0">
+                <div class="product-item" *ngFor="let product of editLeadProducts; let i = index">
+                  <div class="product-row">
+                    <div class="form-group">
+                      <label>Produto</label>
+                      <select [(ngModel)]="product.nome" (change)="onProductChangeEditLead(i)" class="form-input">
+                        <option *ngFor="let availableProduct of getAvailableProductsForEditLead(i)" [value]="availableProduct">
+                          {{ getProductLabel(availableProduct) }}
+                        </option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Valor</label>
+                      <input type="number" [(ngModel)]="product.valor" (input)="onProductChangeEditLead(i)" step="0.01" min="0" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Desconto</label>
+                      <input type="number" [(ngModel)]="product.desconto" (input)="onProductChangeEditLead(i)" step="0.01" min="0" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>Valor Final</label>
+                      <input type="number" [value]="product.valorFinal" readonly class="form-input readonly">
+                    </div>
+                    
+                    <div class="form-group">
+                      <label>&nbsp;</label>
+                      <button type="button" (click)="removeProductFromEditLead(i)" class="btn btn-danger btn-sm">🗑️</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" *ngIf="editLeadProducts.length > 0">
+                <label for="edit-descontoGeral">Desconto Geral</label>
+                <input type="number" id="edit-descontoGeral" [(ngModel)]="editLead.descontoGeral" (input)="onDescontoGeralChangeEditLead()" name="descontoGeral" step="0.01" min="0" class="form-input">
+              </div>
+
+              <div class="total-section" *ngIf="editLeadProducts.length > 0">
+                <div class="total-display">
+                  <strong>Valor Total: {{ formatCurrency(editLead.valorTotal || 0) }}</strong>
+                </div>
+              </div>
             </div>
 
             <div class="modal-actions">
