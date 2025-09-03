@@ -134,7 +134,9 @@ leadpro/
 ## Suporte
 
 Para suporte técnico, entre em contato com a equipe de desenvolvimento da MW Soluções.
+Este é um produto MW Soluções.
 
+Desenvolvido por Equipe EasyBI.
 ---
 
 **LeadPro** - Transformando leads em resultados
