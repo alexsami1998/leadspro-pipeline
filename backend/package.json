@@ -2,6 +2,7 @@
   "name": "leadpro-backend",
   "version": "1.0.0",
   "description": "Backend para o sistema LeadPro",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

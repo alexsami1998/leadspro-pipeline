@@ -2,6 +2,35 @@
 
 echo "🚀 Iniciando Sistema LeadPro..."
 
+# Criar diretório de logs se não existir
+mkdir -p logs
+
+# Função para detectar IP da máquina
+detect_ip() {
+    # Tentar detectar IP da interface principal
+    local ip=$(ip route get 1.1.1.1 2>/dev/null | grep -oP 'src \K\S+' | head -1)
+    
+    # Fallback para outros métodos
+    if [ -z "$ip" ]; then
+        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    fi
+    
+    if [ -z "$ip" ]; then
+        ip=$(ifconfig 2>/dev/null | grep -oP 'inet \K[0-9.]+' | grep -v '127.0.0.1' | head -1)
+    fi
+    
+    # Se ainda não encontrou, usar localhost
+    if [ -z "$ip" ]; then
+        ip="localhost"
+    fi
+    
+    echo "$ip"
+}
+
+# Detectar IP da máquina
+DETECTED_IP=$(detect_ip)
+echo "🌐 IP detectado: $DETECTED_IP"
+
 # Função para verificar se uma porta está em uso
 check_port() {
     local port=$1
@@ -58,13 +87,13 @@ wait_for_port 8080 "Frontend"
 echo ""
 echo "🎉 Sistema LeadPro iniciado com sucesso!"
 echo ""
-echo "📊 URLs de acesso:"
+echo "📊 URLs de acesso local:"
 echo "   Frontend: http://localhost:8080"
 echo "   Backend API: http://localhost:5000/api"
 echo ""
-echo "🌐 URLs externas (acessíveis de qualquer dispositivo):"
-echo "   Frontend: http://localhost:8080"
-echo "   Backend API: http://localhost:5000/api"
+echo "🌐 URLs externas (acessíveis de qualquer dispositivo na rede):"
+echo "   Frontend: http://$DETECTED_IP:8080"
+echo "   Backend API: http://$DETECTED_IP:5000/api"
 echo ""
 echo "🔐 Credenciais de acesso:"
 echo "   Usuário: admin"

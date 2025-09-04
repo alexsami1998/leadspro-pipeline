@@ -16,15 +16,15 @@ const config = {
   
   // Configuração para execução manual em VM
   manual: {
-    enabled: false, // Alterar para true quando executar manualmente
-    vmIp: '192.168.1.100', // IP da VM local
+    enabled: true, // Habilitado para execução manual
+    vmIp: '0.0.0.0', // Permite acesso de qualquer IP da rede
     frontend: {
       port: 8080,
-      host: '0.0.0.0'
+      host: '0.0.0.0' // Permite acesso de qualquer IP
     },
     backend: {
       port: 5000,
-      host: '0.0.0.0'
+      host: '0.0.0.0' // Permite acesso de qualquer IP
     }
   },
   

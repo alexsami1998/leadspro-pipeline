@@ -50,9 +50,26 @@ Edite o arquivo `config.js` na raiz do projeto:
 
 ## Execução
 
-### Modo Deploy (Jenkins, Docker, etc.)
+### Início Rápido
 ```bash
+# 1. Instalar dependências
+cd backend && npm install && cd ..
+cd web && npm install && cd ..
+
+# 2. Iniciar sistema
 ./start-system.sh
+```
+
+### Configuração de Rede (Para Acesso Externo)
+
+Para permitir acesso de outros dispositivos na rede:
+
+```bash
+# Verificar configuração de rede
+./check-network.sh
+
+# Configurar firewall (requer sudo)
+sudo ./setup-firewall.sh
 ```
 
 ### Modo Manual
@@ -63,7 +80,12 @@ node server.js
 
 # Frontend
 cd web
-ng serve --port 8080
+ng serve --host 0.0.0.0 --port 8080
+```
+
+### Parar o Sistema
+```bash
+./stop-system.sh
 ```
 
 ## Funcionalidades

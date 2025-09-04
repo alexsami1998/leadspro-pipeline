@@ -1,58 +1,61 @@
 #!/bin/bash
 
-echo "🔥 Configurando Firewall da VM para acesso externo..."
-echo "🌐 IP da VM: localhost"
+echo "🛡️  Configurando firewall para o LeadPro..."
 
-# Verificar se o UFW está instalado
-if ! command -v ufw &> /dev/null; then
-    echo "📦 Instalando UFW..."
-    sudo apt update
-    sudo apt install -y ufw
+# Verificar se o usuário tem permissões de sudo
+if ! sudo -n true 2>/dev/null; then
+    echo "❌ Este script precisa ser executado com sudo ou com permissões de administrador"
+    echo "   Execute: sudo ./setup-firewall.sh"
+    exit 1
 fi
 
-# Verificar status atual do UFW
-echo "📊 Status atual do firewall:"
-sudo ufw status
+# Verificar se UFW está disponível
+if command -v ufw >/dev/null 2>&1; then
+    echo "🔧 Configurando UFW..."
+    
+    # Habilitar UFW se não estiver ativo
+    if ! ufw status | grep -q "Status: active"; then
+        echo "   Habilitando UFW..."
+        ufw --force enable
+    fi
+    
+    # Permitir portas do LeadPro
+    echo "   Permitindo porta 5000 (Backend)..."
+    ufw allow 5000/tcp
+    
+    echo "   Permitindo porta 8080 (Frontend)..."
+    ufw allow 8080/tcp
+    
+    # Permitir SSH (importante para não perder acesso)
+    echo "   Permitindo SSH..."
+    ufw allow ssh
+    
+    echo "   Recarregando regras..."
+    ufw reload
+    
+    echo "✅ UFW configurado com sucesso!"
+    
+elif command -v iptables >/dev/null 2>&1; then
+    echo "🔧 Configurando iptables..."
+    
+    # Permitir portas do LeadPro
+    echo "   Permitindo porta 5000 (Backend)..."
+    iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+    
+    echo "   Permitindo porta 8080 (Frontend)..."
+    iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+    
+    echo "✅ iptables configurado!"
+    echo "⚠️  Lembre-se de salvar as regras do iptables para persistir após reinicialização"
+    
+else
+    echo "⚠️  Nenhum firewall detectado (UFW ou iptables)"
+    echo "   As portas podem já estar abertas por padrão"
+fi
 
-# Configurar regras para permitir acesso externo
-echo "🔓 Configurando regras de firewall..."
-
-# Permitir SSH (porta 22)
-sudo ufw allow 22/tcp
-
-# Permitir acesso ao backend (porta 5000)
-sudo ufw allow 5000/tcp
-
-# Permitir acesso ao frontend (porta 8080)
-sudo ufw allow 8080/tcp
-
-# Permitir acesso HTTP (porta 80) se usar nginx
-sudo ufw allow 80/tcp
-
-# Permitir acesso ao PostgreSQL se necessário (porta 5432)
-# sudo ufw allow 5432/tcp
-
-# Habilitar o firewall
-echo "✅ Habilitando firewall..."
-sudo ufw --force enable
-
-# Mostrar status final
 echo ""
-echo "🎉 Firewall configurado com sucesso!"
+echo "🌐 URLs de acesso após configuração:"
+echo "   Frontend: http://$(hostname -I | awk '{print $1}'):8080"
+echo "   Backend:  http://$(hostname -I | awk '{print $1}'):5000/api"
 echo ""
-echo "📊 Regras ativas:"
-sudo ufw status numbered
-
-echo ""
-echo "🌐 URLs de acesso externo:"
-echo "   Frontend: http://localhost:8080"
-echo "   Backend API: http://localhost:5000/api"
-echo ""
-echo "⚠️  IMPORTANTE:"
-echo "   - As portas 5000 e 8080 estão abertas para acesso externo"
-echo "   - O firewall está ativo e protegendo a VM"
-echo "   - Apenas as portas necessárias estão abertas"
-echo ""
-echo "🔧 Para verificar se as portas estão acessíveis:"
-echo "   telnet localhost 5000"
-echo "   telnet localhost 8080"
+echo "✅ Configuração de firewall concluída!"

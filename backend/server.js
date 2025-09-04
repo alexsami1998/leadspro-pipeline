@@ -8,6 +8,7 @@ import multer from 'multer';
 import config from '../config.js';
 import dotenv from 'dotenv';
 import redisService from './services/redisService.js';
+import os from 'os';
 
 dotenv.config();
 
@@ -29,18 +30,34 @@ const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
+// Detectar IP da máquina para configurações
+function detectIPForConfig() {
+  const interfaces = os.networkInterfaces();
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const detectedIP = detectIPForConfig();
+
 // Middleware de segurança
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5000", "http://127.0.0.1:5000"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       fontSrc: ["'self'", "https:", "data:"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
+      connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
+      mediaSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`],
       frameSrc: ["'none'"],
     },
   },
@@ -56,14 +73,19 @@ app.use('/api/', limiter);
 
 // CORS - Configuração dinâmica baseada no modo de execução
 const frontendPort = isManualMode ? config.manual.frontend.port : config.deploy.frontend.port;
-const frontendHost = isManualMode ? config.manual.vmIp : 'localhost';
+
+// Usar o IP já detectado
 
 app.use(cors({
   origin: [
     `http://localhost:${frontendPort}`,
     `http://127.0.0.1:${frontendPort}`,
-    `http://${frontendHost}:${frontendPort}`,
-    `http://${frontendHost}`
+    `http://${detectedIP}:${frontendPort}`,
+    `http://${detectedIP}`,
+    // Permitir qualquer IP da rede local (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
+    /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
+    /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/
   ],
   credentials: true
 }));
@@ -993,8 +1015,24 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
+// Função para detectar IP da máquina
+function detectIP() {
+  const interfaces = os.networkInterfaces();
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
+const DETECTED_IP = detectIP();
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📊 API disponível em: http://localhost:${PORT}/api`);
-console.log(`🌐 Acessível externamente em: http://localhost:${PORT}/api`);
+  console.log(`🌐 Acessível externamente em: http://${DETECTED_IP}:${PORT}/api`);
 });
