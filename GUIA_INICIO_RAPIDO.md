@@ -33,7 +33,14 @@ psql -h 72.60.144.80 -U postgres -d pipeline -f web/leadpro_database.sql
 ./start-system.sh
 ```
 
-### 4️⃣ **Configurar Acesso Externo (Opcional)**
+### 4️⃣ **Testar Acesso Externo**
+
+```bash
+# Testar se o acesso externo está funcionando
+./test-external-access.sh
+```
+
+### 5️⃣ **Configurar Acesso Externo (Opcional)**
 
 Para permitir acesso de outros dispositivos na rede:
 
@@ -45,7 +52,7 @@ Para permitir acesso de outros dispositivos na rede:
 sudo ./setup-firewall.sh
 ```
 
-### 5️⃣ **Acessar o Sistema**
+### 6️⃣ **Acessar o Sistema**
 
 Após iniciar, você verá as URLs de acesso:
 
@@ -109,6 +116,15 @@ leadspro-pipeline/
 ---
 
 ## ⚠️ Solução de Problemas
+
+### Erro de CORS (Cross-Origin Request Blocked)
+**Problema**: Frontend não carrega dados quando acessado externamente
+**Solução**: ✅ **RESOLVIDO** - O sistema agora detecta automaticamente o IP correto
+
+```bash
+# Verificar se está funcionando
+./test-external-access.sh
+```
 
 ### Erro de Porta em Uso
 ```bash
