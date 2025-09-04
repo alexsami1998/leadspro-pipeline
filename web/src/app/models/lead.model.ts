@@ -97,13 +97,19 @@ export interface Interaction {
   conteudo: string;
   dataCriacao: Date;
   usuarioCriacao: string;
+  mediaId?: string;
+  mediaType?: string;
+  mediaFilename?: string;
 }
 
 export enum InteractionType {
+  EMAIL = 'EMAIL',
+  TELEFONE = 'TELEFONE',
+  REUNIAO = 'REUNIAO',
+  PROPOSTA = 'PROPOSTA',
   CONTATO_INICIAL = 'CONTATO_INICIAL',
   QUALIFICACAO = 'QUALIFICACAO',
   APRESENTACAO = 'APRESENTACAO',
-  PROPOSTA = 'PROPOSTA',
   COBRANCA = 'COBRANCA',
   IMPLEMENTACAO = 'IMPLEMENTACAO',
   OUTRO = 'OUTRO'

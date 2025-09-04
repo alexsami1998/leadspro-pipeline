@@ -439,6 +439,41 @@
               <div class="interaction-content">
                 {{ interaction.conteudo }}
               </div>
+              
+              <!-- Mídia da interação -->
+              <div class="interaction-media" *ngIf="interaction.mediaId">
+                <div class="media-item">
+                  <div class="media-preview-small" *ngIf="interaction.mediaType && isImageType(interaction.mediaType)">
+                    <img [src]="getMediaUrl(interaction.mediaId)" 
+                         [alt]="interaction.mediaFilename"
+                         (click)="openMediaModal(interaction)"
+                         class="media-thumbnail"
+                         (error)="onImageError($event)"
+                         (load)="onImageLoad()">
+                    <div class="media-actions">
+                      <button (click)="openMediaModal(interaction)" class="btn-view-media" title="Visualizar em tamanho maior">
+                        🔍
+                      </button>
+                      <button (click)="downloadMedia(interaction)" class="btn-download-media" title="Baixar imagem">
+                        📥
+                      </button>
+                    </div>
+                  </div>
+                  <div class="media-document" *ngIf="interaction.mediaType && !isImageType(interaction.mediaType)">
+                    <div class="document-preview" (click)="downloadMedia(interaction)">
+                      <div class="document-icon">📄</div>
+                      <div class="document-details">
+                        <p class="document-name">{{ interaction.mediaFilename }}</p>
+                        <p class="document-type">{{ getFileTypeLabel(interaction.mediaType) }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button (click)="downloadMedia(interaction)" class="btn-download-media" title="Baixar arquivo">
+                    📥
+                  </button>
+                </div>
+              </div>
+              
               <div class="interaction-user">
                 Por: {{ interaction.usuarioCriacao }}
               </div>
@@ -479,11 +514,98 @@
             <textarea id="interaction-conteudo" [(ngModel)]="newInteraction.conteudo" name="conteudo" rows="4" required class="form-input" placeholder="Descreva a interação realizada..."></textarea>
           </div>
 
+          <!-- Upload de Mídia -->
+          <div class="form-group">
+            <label>Anexar Mídia (Opcional)</label>
+            <div class="media-upload-container">
+              <div class="media-upload-area" 
+                   [class.dragover]="isDragOver"
+                   (dragover)="onDragOver($event)"
+                   (dragleave)="onDragLeave($event)"
+                   (drop)="onDrop($event)"
+                   (click)="fileInput.click()">
+                <div class="upload-content">
+                  <div class="upload-icon">📎</div>
+                  <p class="upload-text">
+                    <span *ngIf="!selectedFile">Clique aqui ou arraste um arquivo</span>
+                    <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+                  </p>
+                  <p class="upload-hint">Imagens, PDFs e documentos (máx. 10MB)</p>
+                </div>
+              </div>
+              <input #fileInput type="file" 
+                     (change)="onFileSelected($event)"
+                     accept="image/*,.pdf,.doc,.docx"
+                     style="display: none;">
+              
+              <!-- Preview da mídia selecionada -->
+              <div class="media-preview" *ngIf="selectedFile">
+                <div class="preview-content">
+                  <div class="preview-image" *ngIf="isImageFile(selectedFile)">
+                    <img [src]="mediaPreviewUrl" [alt]="selectedFile.name">
+                  </div>
+                  <div class="preview-document" *ngIf="!isImageFile(selectedFile)">
+                    <div class="document-icon">📄</div>
+                    <div class="document-info">
+                      <p class="document-name">{{ selectedFile.name }}</p>
+                      <p class="document-size">{{ formatFileSize(selectedFile.size) }}</p>
+                    </div>
+                  </div>
+                  <button type="button" (click)="removeSelectedFile()" class="btn-remove-file">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button type="button" (click)="closeModals()" class="btn btn-secondary">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Registrar Interação</button>
+            <button type="submit" class="btn btn-primary" [disabled]="uploadingMedia">
+              <span *ngIf="!uploadingMedia">Registrar Interação</span>
+              <span *ngIf="uploadingMedia">⏳ Enviando...</span>
+            </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Modal -->
+  <div class="modal-overlay" *ngIf="showMediaModal" (click)="closeMediaModal()">
+    <div class="modal media-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedMediaInteraction?.mediaFilename }}</h2>
+        <button (click)="closeMediaModal()" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="media-viewer" *ngIf="selectedMediaInteraction">
+          <div class="media-image" *ngIf="selectedMediaInteraction.mediaType && isImageType(selectedMediaInteraction.mediaType)">
+            <div class="image-container">
+              <img [src]="getMediaUrl(selectedMediaInteraction.mediaId || '')" 
+                   [alt]="selectedMediaInteraction.mediaFilename"
+                   class="full-size-image"
+                   [class.zoomed]="isImageZoomed">
+            </div>
+            <div class="media-controls">
+              <button (click)="toggleImageZoom()" class="btn-control" title="Ampliar/Reduzir">
+                {{ isImageZoomed ? '🔍-' : '🔍+' }}
+              </button>
+              <button (click)="downloadMedia(selectedMediaInteraction)" class="btn-control" title="Baixar imagem">
+                📥
+              </button>
+              <span class="media-info">{{ selectedMediaInteraction.mediaFilename }}</span>
+            </div>
+          </div>
+          <div class="media-document" *ngIf="selectedMediaInteraction.mediaType && !isImageType(selectedMediaInteraction.mediaType)">
+            <div class="document-viewer">
+              <div class="document-icon-large">📄</div>
+              <h3>{{ selectedMediaInteraction.mediaFilename }}</h3>
+              <p class="document-type">{{ getFileTypeLabel(selectedMediaInteraction.mediaType) }}</p>
+              <button (click)="downloadMedia(selectedMediaInteraction)" class="btn btn-primary">
+                📥 Baixar Arquivo
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

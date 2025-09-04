@@ -36,6 +36,15 @@ export class LeadsComponent implements OnInit {
   editLeadProducts: LeadProduct[] = [];
   availableProducts = Object.values(ProductName);
 
+  // Media management
+  selectedFile: File | null = null;
+  mediaPreviewUrl: string | null = null;
+  uploadingMedia = false;
+  isDragOver = false;
+  showMediaModal = false;
+  selectedMediaInteraction: Interaction | null = null;
+  isImageZoomed = false;
+
   // Enums para o template
   LeadStatus = LeadStatus;
   LeadSource = LeadSource;
@@ -174,29 +183,7 @@ export class LeadsComponent implements OnInit {
     }
   }
 
-  // Interactions
-  addInteraction(): void {
-    if (!this.selectedLead?.id || !this.newInteraction.tipo || !this.newInteraction.conteudo) {
-      alert('Por favor, preencha todos os campos da interação');
-      return;
-    }
-
-    this.leadService.createInteraction(
-      this.selectedLead.id,
-      this.newInteraction.tipo as InteractionType,
-      this.newInteraction.conteudo
-    ).subscribe({
-      next: (interaction) => {
-        this.showInteractionModal = false;
-        this.newInteraction = {};
-        alert('Interação registrada com sucesso!');
-      },
-      error: (error) => {
-        console.error('Erro ao criar interação:', error);
-        alert('Erro ao criar interação');
-      }
-    });
-  }
+  // Interactions - função removida (duplicada)
 
   // Filtering and Search
   filterLeads(): void {
@@ -247,6 +234,7 @@ export class LeadsComponent implements OnInit {
     this.selectedLead = lead;
     this.showInteractionModal = true;
     this.newInteraction = {
+      leadId: lead.id,
       tipo: InteractionType.CONTATO_INICIAL
     };
   }
@@ -269,6 +257,7 @@ export class LeadsComponent implements OnInit {
   loadLeadInteractions(leadId: number): void {
     this.leadService.getInteractions(leadId).subscribe({
       next: (interactions) => {
+        console.log('Interações carregadas:', interactions);
         this.leadInteractions = interactions;
       },
       error: (error) => {
@@ -450,6 +439,214 @@ export class LeadsComponent implements OnInit {
       .map((p, i) => i !== index ? p.nome : null)
       .filter(p => p !== null);
     return this.availableProducts.filter(p => !usedProducts.includes(p));
+  }
+
+  // Media management methods
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+    
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.handleFile(files[0]);
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.handleFile(input.files[0]);
+    }
+  }
+
+  private handleFile(file: File): void {
+    // Validar tipo de arquivo
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      alert('Tipo de arquivo não permitido. Apenas imagens e PDFs são aceitos.');
+      return;
+    }
+
+    // Validar tamanho (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Arquivo muito grande. Tamanho máximo: 10MB');
+      return;
+    }
+
+    this.selectedFile = file;
+
+    // Criar preview para imagens
+    if (this.isImageFile(file)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.mediaPreviewUrl = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.mediaPreviewUrl = null;
+    }
+  }
+
+  isImageFile(file: File): boolean {
+    return file.type.startsWith('image/');
+  }
+
+  isImageType(mimeType: string | undefined): boolean {
+    return mimeType?.startsWith('image/') || false;
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  removeSelectedFile(): void {
+    this.selectedFile = null;
+    this.mediaPreviewUrl = null;
+  }
+
+  getMediaUrl(mediaId: string): string {
+    const url = `http://localhost:5000/api/media/${mediaId}`;
+    console.log('Media URL:', url);
+    return url;
+  }
+
+  onImageError(event: any): void {
+    console.error('Erro ao carregar imagem:', event);
+  }
+
+  onImageLoad(): void {
+    console.log('Imagem carregada com sucesso');
+  }
+
+  toggleImageZoom(): void {
+    this.isImageZoomed = !this.isImageZoomed;
+  }
+
+  getFileTypeLabel(mimeType: string): string {
+    const typeMap: { [key: string]: string } = {
+      'image/jpeg': 'Imagem JPEG',
+      'image/jpg': 'Imagem JPG',
+      'image/png': 'Imagem PNG',
+      'image/gif': 'Imagem GIF',
+      'application/pdf': 'Documento PDF',
+      'application/msword': 'Documento Word',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Documento Word'
+    };
+    return typeMap[mimeType] || 'Arquivo';
+  }
+
+  openMediaModal(interaction: Interaction): void {
+    this.selectedMediaInteraction = interaction;
+    this.showMediaModal = true;
+  }
+
+  closeMediaModal(): void {
+    this.showMediaModal = false;
+    this.selectedMediaInteraction = null;
+  }
+
+  downloadMedia(interaction: Interaction): void {
+    if (interaction.mediaId) {
+      const link = document.createElement('a');
+      link.href = this.getMediaUrl(interaction.mediaId);
+      link.download = interaction.mediaFilename || 'arquivo';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
+  async addInteraction(): Promise<void> {
+    if (!this.newInteraction.tipo || !this.newInteraction.conteudo) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    try {
+      this.uploadingMedia = true;
+      
+      let mediaId: string | null = null;
+      let mediaType: string | null = null;
+      let mediaFilename: string | null = null;
+
+      // Upload da mídia se houver arquivo selecionado
+      if (this.selectedFile) {
+        const formData = new FormData();
+        formData.append('media', this.selectedFile);
+
+        const uploadResponse = await fetch('http://localhost:5000/api/media/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          mediaId = uploadData.mediaId;
+          mediaType = uploadData.mimeType;
+          mediaFilename = uploadData.filename;
+        } else {
+          throw new Error('Erro no upload da mídia');
+        }
+      }
+
+      // Criar a interação
+      const interactionData = {
+        lead_id: this.newInteraction.leadId,
+        tipo: this.newInteraction.tipo,
+        conteudo: this.newInteraction.conteudo,
+        usuario_criacao: this.authService.getCurrentUser()?.id,
+        media_id: mediaId,
+        media_type: mediaType,
+        media_filename: mediaFilename
+      };
+
+      const response = await fetch('http://localhost:5000/api/interactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(interactionData)
+      });
+
+      if (response.ok) {
+        // Limpar formulário
+        this.newInteraction = {};
+        this.selectedFile = null;
+        this.mediaPreviewUrl = null;
+        
+        // Fechar modal
+        this.closeModals();
+        
+        // Recarregar interações
+        if (this.editLead && this.editLead.id) {
+          await this.loadLeadInteractions(this.editLead.id);
+        }
+        
+        alert('Interação registrada com sucesso!');
+      } else {
+        throw new Error('Erro ao registrar interação');
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar interação:', error);
+      alert('Erro ao registrar interação. Tente novamente.');
+    } finally {
+      this.uploadingMedia = false;
+    }
   }
 }
 

@@ -37,12 +37,13 @@ export class LeadService {
   }
 
   createLead(lead: Omit<Lead, 'id' | 'dataCriacao' | 'dataAtualizacao'>): Observable<Lead> {
+    const currentUser = this.authService.getCurrentUser();
     const newLead: Lead = {
       ...lead,
       status: LeadStatus.NOVO_LEAD,
       dataCriacao: new Date(),
       dataAtualizacao: new Date(),
-      usuarioCriacao: this.authService.getCurrentUser()?.nome || 'Sistema'
+      usuarioCriacao: currentUser?.id?.toString() || '1'
     };
 
     return this.databaseService.createLead(newLead).pipe(
@@ -55,10 +56,11 @@ export class LeadService {
   }
 
   updateLead(id: number, updates: Partial<Lead>): Observable<Lead> {
+    const currentUser = this.authService.getCurrentUser();
     const updatedLead = {
       ...updates,
       dataAtualizacao: new Date(),
-      usuarioAtualizacao: this.authService.getCurrentUser()?.nome || 'Sistema'
+      usuarioAtualizacao: currentUser?.id?.toString() || '1'
     };
 
     return this.databaseService.updateLead(id, updatedLead as Lead).pipe(
@@ -171,11 +173,12 @@ export class LeadService {
   }
 
   createInteraction(leadId: number, tipo: InteractionType, conteudo: string): Observable<Interaction> {
+    const currentUser = this.authService.getCurrentUser();
     const interaction = {
       lead_id: leadId,
       tipo: tipo,
       conteudo: conteudo,
-      usuario_criacao: this.authService.getCurrentUser()?.nome || 'Sistema'
+      usuario_criacao: currentUser?.id?.toString() || '1'
     };
 
     return this.databaseService.createInteraction(interaction as any).pipe(

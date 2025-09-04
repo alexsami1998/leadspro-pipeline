@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Upload de Mídia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .file-input {
+            display: none;
+        }
+        .upload-btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .upload-btn:hover {
+            background: #0056b3;
+        }
+        .preview {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 5px;
+        }
+        .file-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .download-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+        .download-btn:hover {
+            background: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Upload de Mídia</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>📁 Arraste e solte um arquivo aqui ou clique para selecionar</p>
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+            Selecionar Arquivo
+        </button>
+        <input type="file" id="fileInput" class="file-input" accept="image/*,.pdf,.doc,.docx">
+    </div>
+
+    <div id="preview" class="preview" style="display: none;">
+        <h3>Preview do Arquivo</h3>
+        <div id="filePreview"></div>
+        <div id="fileInfo" class="file-info"></div>
+        <button class="upload-btn" onclick="uploadFile()">Upload</button>
+    </div>
+
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <script>
+        let selectedFile = null;
+        let uploadedMediaId = null;
+
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const filePreview = document.getElementById('filePreview');
+        const fileInfo = document.getElementById('fileInfo');
+        const result = document.getElementById('result');
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            
+            // Show file info
+            fileInfo.innerHTML = `
+                <strong>Nome:</strong> ${file.name}<br>
+                <strong>Tipo:</strong> ${file.type}<br>
+                <strong>Tamanho:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB
+            `;
+
+            // Show preview
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    filePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                filePreview.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">📄</div>
+                        <p><strong>${file.name}</strong></p>
+                        <p>Arquivo de documento</p>
+                    </div>
+                `;
+            }
+
+            preview.style.display = 'block';
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('media', selectedFile);
+
+            try {
+                result.innerHTML = '<p>⏳ Fazendo upload...</p>';
+                
+                const response = await fetch('http://localhost:5000/api/media/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    uploadedMediaId = data.mediaId;
+                    result.innerHTML = `
+                        <div style="background: #d4edda; padding: 15px; border-radius: 5px; border: 1px solid #c3e6cb;">
+                            <h4>✅ Upload realizado com sucesso!</h4>
+                            <p><strong>ID da Mídia:</strong> ${data.mediaId}</p>
+                            <p><strong>Nome:</strong> ${data.filename}</p>
+                            <p><strong>Tipo:</strong> ${data.mimeType}</p>
+                            <p><strong>Tamanho:</strong> ${(data.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <a href="http://localhost:5000/api/media/${data.mediaId}" class="download-btn" target="_blank">
+                                📥 Baixar Arquivo
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `<p style="color: red;">❌ Erro no upload: ${data.error}</p>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">❌ Erro: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

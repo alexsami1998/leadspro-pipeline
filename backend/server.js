@@ -4,8 +4,10 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
 import config from '../config.js';
 import dotenv from 'dotenv';
+import redisService from './services/redisService.js';
 
 dotenv.config();
 
@@ -28,7 +30,22 @@ const pool = new Pool({
 });
 
 // Middleware de segurança
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5000", "http://127.0.0.1:5000"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https:", "data:"],
+      connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginResourcePolicy: false
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -52,6 +69,27 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Configuração do multer para upload de arquivos
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limite
+  },
+  fileFilter: (req, file, cb) => {
+    // Permitir imagens e PDFs
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
+    const extname = allowedTypes.test(file.originalname.toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não permitido. Apenas imagens e PDFs são aceitos.'));
+    }
+  }
+});
 
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -209,13 +247,16 @@ app.post('/api/leads', async (req, res) => {
       }
     }
 
+    // Converter usuarioCriacao para integer
+    const usuarioCriacaoId = usuarioCriacao ? parseInt(usuarioCriacao) : 1;
+
     const result = await client.query(`
       INSERT INTO leads (
         nome, email, telefone, empresa, cargo, fonte, status,
         valor_contrato, observacoes, usuario_criacao, desconto_geral, valor_total
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
-    `, [nome, email, telefone, empresa, cargo, fonte, status, valorContrato, observacoes, usuarioCriacao, descontoGeral || 0, valorTotal]);
+    `, [nome, email, telefone, empresa, cargo, fonte, status, valorContrato, observacoes, usuarioCriacaoId, descontoGeral || 0, valorTotal]);
 
     const lead = result.rows[0];
     
@@ -298,7 +339,11 @@ app.put('/api/leads/:id', async (req, res) => {
     if (updates.status !== undefined) mappedUpdates.status = updates.status;
     if (updates.valorContrato !== undefined) mappedUpdates.valor_contrato = updates.valorContrato;
     if (updates.observacoes !== undefined) mappedUpdates.observacoes = updates.observacoes;
-    if (updates.usuarioAtualizacao !== undefined) mappedUpdates.usuario_atualizacao = updates.usuarioAtualizacao;
+    if (updates.usuarioAtualizacao !== undefined) {
+      // Converter usuarioAtualizacao para integer
+      const usuarioAtualizacaoId = updates.usuarioAtualizacao ? parseInt(updates.usuarioAtualizacao) : 1;
+      mappedUpdates.usuario_atualizacao = usuarioAtualizacaoId;
+    }
     if (updates.descontoGeral !== undefined) mappedUpdates.desconto_geral = updates.descontoGeral;
     
     // Calcular valor total se produtos foram fornecidos
@@ -418,6 +463,84 @@ app.delete('/api/leads/:id', async (req, res) => {
   }
 });
 
+// Rotas de mídia
+app.post('/api/media/upload', upload.single('media'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    const { buffer, originalname, mimetype } = req.file;
+    
+    // Salvar no Redis
+    const result = await redisService.saveMedia(buffer, originalname, mimetype);
+    
+    res.json({
+      success: true,
+      mediaId: result.mediaId,
+      filename: result.metadata.filename,
+      mimeType: result.metadata.mimeType,
+      size: result.metadata.size
+    });
+  } catch (error) {
+    console.error('Erro no upload de mídia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.get('/api/media/:mediaId', async (req, res) => {
+  try {
+    const { mediaId } = req.params;
+    console.log(`🔍 Requisição de mídia recebida: ${mediaId}`);
+    
+    const mediaData = await redisService.getMedia(mediaId);
+    
+    if (!mediaData) {
+      console.log(`❌ Mídia não encontrada no Redis: ${mediaId}`);
+      return res.status(404).json({ error: 'Mídia não encontrada' });
+    }
+    
+    const { buffer, metadata } = mediaData;
+    console.log(`✅ Mídia encontrada: ${metadata.filename}, tipo: ${metadata.mimeType}, tamanho: ${metadata.size}`);
+    console.log(`📊 Buffer length: ${buffer.length}, Buffer type: ${typeof buffer}`);
+    
+    console.log(`📊 Buffer final: length=${buffer.length}, type=${typeof buffer}, isBuffer=${Buffer.isBuffer(buffer)}`);
+    
+    // Definir headers apropriados
+    res.set({
+      'Content-Type': metadata.mimeType,
+      'Content-Disposition': `inline; filename="${metadata.filename}"`,
+      'Content-Length': buffer.length,
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+    
+    res.send(buffer);
+  } catch (error) {
+    console.error('Erro ao recuperar mídia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.delete('/api/media/:mediaId', async (req, res) => {
+  try {
+    const { mediaId } = req.params;
+    
+    const deleted = await redisService.deleteMedia(mediaId);
+    
+    if (deleted) {
+      res.json({ success: true, message: 'Mídia deletada com sucesso' });
+    } else {
+      res.status(404).json({ error: 'Mídia não encontrada' });
+    }
+  } catch (error) {
+    console.error('Erro ao deletar mídia:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Rotas de interações
 app.get('/api/leads/:id/interactions', async (req, res) => {
   try {
@@ -434,7 +557,10 @@ app.get('/api/leads/:id/interactions', async (req, res) => {
       tipo: interaction.tipo,
       conteudo: interaction.conteudo,
       dataCriacao: interaction.data_criacao,
-      usuarioCriacao: interaction.usuario_criacao
+      usuarioCriacao: interaction.usuario_criacao,
+      mediaId: interaction.media_id,
+      mediaType: interaction.media_type,
+      mediaFilename: interaction.media_filename
     }));
     
     res.json(mappedInteractions);
@@ -446,13 +572,16 @@ app.get('/api/leads/:id/interactions', async (req, res) => {
 
 app.post('/api/interactions', async (req, res) => {
   try {
-    const { lead_id, tipo, conteudo, usuario_criacao } = req.body;
+    const { lead_id, tipo, conteudo, usuario_criacao, media_id, media_type, media_filename } = req.body;
+    
+    // Converter usuario_criacao para integer
+    const usuarioCriacaoId = usuario_criacao ? parseInt(usuario_criacao) : 1;
     
     const result = await pool.query(`
-      INSERT INTO interactions (lead_id, tipo, conteudo, usuario_criacao)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO interactions (lead_id, tipo, conteudo, usuario_criacao, media_id, media_type, media_filename)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
-    `, [lead_id, tipo, conteudo, usuario_criacao]);
+    `, [lead_id, tipo, conteudo, usuarioCriacaoId, media_id, media_type, media_filename]);
     
     // Mapear campos do banco para o frontend
     const interaction = result.rows[0];
@@ -462,7 +591,10 @@ app.post('/api/interactions', async (req, res) => {
       tipo: interaction.tipo,
       conteudo: interaction.conteudo,
       dataCriacao: interaction.data_criacao,
-      usuarioCriacao: interaction.usuario_criacao
+      usuarioCriacao: interaction.usuario_criacao,
+      mediaId: interaction.media_id,
+      mediaType: interaction.media_type,
+      mediaFilename: interaction.media_filename
     };
     
     res.status(201).json(mappedInteraction);
