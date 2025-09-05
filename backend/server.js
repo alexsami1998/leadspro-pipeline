@@ -68,7 +68,7 @@ app.use(cors({
   origin: true, // Permitir qualquer origem
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-user-id', 'X-User-Id']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-user-id', 'X-User-Id', 'x-user-role', 'X-User-Role']
 }));
 
 app.use(express.json());

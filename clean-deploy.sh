@@ -28,6 +28,10 @@ echo "🔨 Construindo e iniciando containers..."
 docker-compose up -d --build
 
 echo ""
+echo "🔧 Aplicando correção CORS..."
+sleep 5
+
+echo ""
 echo "⏳ Aguardando containers ficarem prontos..."
 sleep 30
 
