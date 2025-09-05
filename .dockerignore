@@ -1,0 +1,48 @@
+# Arquivos e diretórios a serem ignorados no build Docker
+
+# Logs
+logs/
+*.log
+
+# Node modules
+node_modules/
+*/node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Scripts de desenvolvimento
+*.sh
+!deploy.sh
+!update.sh
+
+# Documentação
+README.md
+*.md
+
+# Arquivos de configuração local
+.env
+.env.local
+.env.development
+.env.production
+
+# Cache
+.angular/
+dist/
+build/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Arquivos de teste
+test-*
+*test*
