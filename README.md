@@ -1,164 +1,126 @@
-# LeadPro - Sistema de Gestão de Leads
+# 🚀 LeadPro Pipeline - Sistema de Gestão de Leads
 
-Sistema completo de gestão de leads desenvolvido em Angular com backend Node.js e banco PostgreSQL.
+Sistema completo de gestão de leads com backend Node.js, frontend Angular e banco PostgreSQL.
 
-**Propriedade exclusiva de MW Soluções**
+## 📋 **Pré-requisitos**
 
-## Visão Geral
+- Docker
+- Docker Compose
+- Git
 
-O LeadPro é uma solução robusta para gestão de leads e oportunidades de negócio, oferecendo funcionalidades completas de CRM com interface moderna e responsiva.
+## 🚀 **Instalação e Deploy**
 
-## Arquitetura
-
-- **Frontend**: Angular 17+ com TypeScript
-- **Backend**: Node.js com Express
-- **Banco**: PostgreSQL
-- **Portas**: Frontend (8080), Backend (5000)
-
-## Pré-requisitos
-
-- Node.js 18+
-- PostgreSQL 12+
-- npm ou yarn
-
-## Configuração
-
-### 1. Instalação de Dependências
-
+### **1. Clonar o Repositório**
 ```bash
-# Backend
-cd backend
-npm install
-
-# Frontend
-cd web
-npm install
+git clone https://github.com/alexsami1998/leadspro-pipeline.git
+cd leadspro-pipeline
 ```
 
-### 2. Configuração do Banco
-
-Execute o script de inicialização:
+### **2. Deploy Automático**
 ```bash
-psql -h localhost -U postgres -d leadpro -f web/leadpro_database.sql
+chmod +x *.sh
+./deploy-clean.sh
 ```
 
-### 3. Configuração de Ambiente
+### **3. Acessar o Sistema**
+- **Frontend**: `http://[IP_DA_VM]:8080`
+- **Backend API**: `http://[IP_DA_VM]:5000/api`
+- **Credenciais**: `admin` / `123@mudar`
 
-Edite o arquivo `config.js` na raiz do projeto:
-- Para deploy automatizado: mantenha `manual.enabled = false`
-- Para execução manual: altere `manual.enabled = true` e configure `vmIp`
+## 🔧 **Comandos de Gerenciamento**
 
-## Execução
+| Ação | Comando |
+|------|---------|
+| **Deploy completo** | `./deploy-clean.sh` |
+| **Ver status** | `docker-compose ps` |
+| **Ver logs** | `docker-compose logs -f` |
+| **Parar sistema** | `docker-compose down` |
+| **Iniciar sistema** | `docker-compose up -d` |
+| **Reiniciar** | `docker-compose restart` |
 
-### Início Rápido
+## 🔄 **Atualizações**
+
+### **Atualizar Sistema**
 ```bash
-# 1. Instalar dependências
-cd backend && npm install && cd ..
-cd web && npm install && cd ..
+# 1. Atualizar código
+git pull origin main
 
-# 2. Iniciar sistema
-./start-system.sh
+# 2. Deploy com correções
+./deploy-clean.sh
 ```
 
-### Configuração de Rede (Para Acesso Externo)
+## 🏗️ **Arquitetura**
 
-Para permitir acesso de outros dispositivos na rede:
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (Angular)     │◄──►│   (Node.js)     │◄──►│   (PostgreSQL)  │
+│   Port: 8080    │    │   Port: 5000    │    │   Port: 5432    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
+## 📁 **Estrutura do Projeto**
+
+```
+leadspro-pipeline/
+├── backend/                 # Backend Node.js
+│   ├── server.js           # Servidor principal
+│   ├── services/           # Serviços (Redis, etc.)
+│   └── Dockerfile          # Container do backend
+├── web/                    # Frontend Angular
+│   ├── src/                # Código fonte Angular
+│   ├── Dockerfile          # Container do frontend
+│   └── nginx.conf          # Configuração Nginx
+├── docker-compose.yml      # Orquestração dos containers
+├── deploy-clean.sh         # Script de deploy
+└── README.md              # Este arquivo
+```
+
+## 🛠️ **Tecnologias**
+
+- **Backend**: Node.js, Express, PostgreSQL, Redis
+- **Frontend**: Angular, TypeScript, SCSS
+- **Containerização**: Docker, Docker Compose
+- **Web Server**: Nginx
+
+## 🔐 **Configuração do Banco**
+
+O sistema está configurado para usar um banco PostgreSQL externo:
+- **Host**: 72.60.144.80
+- **Port**: 5432
+- **Database**: pipeline
+- **User**: postgres
+
+## 🆘 **Solução de Problemas**
+
+### **Problema: Frontend mostra página padrão do Nginx**
 ```bash
-# Verificar configuração de rede
-./check-network.sh
-
-# Configurar firewall (requer sudo)
-sudo ./setup-firewall.sh
+# Reconstruir frontend
+docker-compose build --no-cache frontend
+docker-compose up -d frontend
 ```
 
-### Modo Manual
+### **Problema: Erro CORS**
 ```bash
-# Backend
-cd backend
-node server.js
-
-# Frontend
-cd web
-ng serve --host 0.0.0.0 --port 8080
+# Reconstruir backend
+docker-compose build --no-cache backend
+docker-compose up -d backend
 ```
 
-### Parar o Sistema
+### **Problema: Containers não param**
 ```bash
-./stop-system.sh
+# Forçar parada
+docker-compose down --remove-orphans
+docker container prune -f
 ```
 
-## Funcionalidades
+## 📞 **Suporte**
 
-### Gestão de Leads
-- Criação e edição de leads
-- Controle de status e pipeline
-- Histórico de interações
-- Integração WhatsApp
-- Filtros e busca avançada
+Para problemas ou dúvidas:
+1. Verifique os logs: `docker-compose logs -f`
+2. Execute o deploy limpo: `./deploy-clean.sh`
+3. Verifique o status: `docker-compose ps`
 
-### Dashboard
-- Métricas de performance
-- Gráficos de conversão
-- Leads por status
-- Estatísticas por fonte
-
-### Sistema de Usuários
-- Controle de acesso
-- Perfis de permissão
-- Auditoria de ações
-
-### Webhooks
-- Integração com sistemas externos
-- Configuração de eventos
-- Filtros de dados
-
-## Estrutura do Projeto
-
-```
-leadpro/
-├── backend/           # Servidor Node.js
-├── web/              # Frontend Angular
-├── config.js         # Configurações do sistema
-├── prisma/           # Schema do banco
-└── scripts/          # Scripts de automação
-```
-
-## API Endpoints
-
-### Autenticação
-- `POST /api/auth/login` - Login de usuário
-
-### Leads
-- `GET /api/leads` - Listar leads
-- `POST /api/leads` - Criar lead
-- `PUT /api/leads/:id` - Atualizar lead
-- `DELETE /api/leads/:id` - Excluir lead
-
-### Dashboard
-- `GET /api/dashboard/stats` - Estatísticas
-
-## Configurações de Segurança
-
-- Autenticação via banco
-- Rate limiting
-- CORS configurado
-- Headers de segurança
-- Validação de entrada
-
-## Monitoramento
-
-- Logs estruturados
-- Health checks
-- Métricas de performance
-- Tratamento de erros
-
-## Suporte
-
-Para suporte técnico, entre em contato com a equipe de desenvolvimento da MW Soluções.
-Este é um produto MW Soluções.
-
-Desenvolvido por Equipe EasyBI.
 ---
 
-**LeadPro** - Transformando leads em resultados
+**Sistema LeadPro - Gestão de Leads Profissional** 🚀

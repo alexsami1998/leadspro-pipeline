@@ -19,11 +19,17 @@ RUN npm run build
 # Estágio de produção com nginx
 FROM nginx:alpine
 
-# Copiar arquivos buildados
+# Remover arquivos padrão do nginx
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copiar arquivos buildados do Angular
 COPY --from=build /app/dist/leadpro-web/browser /usr/share/nginx/html
 
 # Copiar configuração customizada do nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Verificar se os arquivos foram copiados corretamente
+RUN ls -la /usr/share/nginx/html/
 
 # Expor porta
 EXPOSE 80
