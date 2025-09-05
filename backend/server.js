@@ -46,21 +46,9 @@ function detectIPForConfig() {
 
 const detectedIP = detectIPForConfig();
 
-// Middleware de segurança
+// Middleware de segurança (configuração mais permissiva para desenvolvimento)
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "blob:", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`, "http://*:5000"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      fontSrc: ["'self'", "https:", "data:"],
-      connectSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`, "http://*:5000"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'", "http://localhost:5000", "http://127.0.0.1:5000", `http://${detectedIP}:5000`, "http://*:5000"],
-      frameSrc: ["'none'"],
-    },
-  },
+  contentSecurityPolicy: false, // Desabilitar CSP para evitar problemas de CORS
   crossOriginResourcePolicy: false
 }));
 
@@ -77,17 +65,10 @@ const frontendPort = isManualMode ? config.manual.frontend.port : config.deploy.
 // Usar o IP já detectado
 
 app.use(cors({
-  origin: [
-    `http://localhost:${frontendPort}`,
-    `http://127.0.0.1:${frontendPort}`,
-    `http://${detectedIP}:${frontendPort}`,
-    `http://${detectedIP}`,
-    // Permitir qualquer IP da rede local (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
-    /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
-    /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
-    /^http:\/\/172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+:\d+$/
-  ],
-  credentials: true
+  origin: true, // Permitir qualquer origem
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 app.use(express.json());
