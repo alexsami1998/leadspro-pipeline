@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { Pool } from 'pg';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import config from '../config.js';
+import config from './config.js';
 import dotenv from 'dotenv';
 import redisService from './services/redisService.js';
 import os from 'os';

@@ -5,13 +5,16 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copiar package.json e package-lock.json
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Instalar dependências
 RUN npm ci --only=production
 
-# Copiar código fonte
-COPY . .
+# Copiar código fonte do backend
+COPY backend/ ./
+
+# Copiar arquivo de configuração da raiz
+COPY config.js ./
 
 # Criar diretório de logs
 RUN mkdir -p logs
