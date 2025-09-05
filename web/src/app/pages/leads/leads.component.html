@@ -47,6 +47,9 @@
       </div>
 
       <div class="actions">
+        <button (click)="openPdfExportModal()" class="btn btn-success">
+          📄 Exportar PDF
+        </button>
         <button (click)="openCreateModal()" class="btn btn-primary" *ngIf="canEditLeads()">
           ➕ Novo Lead
         </button>
@@ -607,6 +610,16 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal de Exportação PDF -->
+  <div class="modal-overlay" *ngIf="showPdfExportModal" (click)="closePdfExportModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <app-pdf-export 
+        (export)="onPdfExportSuccess()"
+        (cancel)="closePdfExportModal()">
+      </app-pdf-export>
     </div>
   </div>
 </div>

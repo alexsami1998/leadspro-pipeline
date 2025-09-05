@@ -8,6 +8,7 @@ import multer from 'multer';
 import config from './config.js';
 import dotenv from 'dotenv';
 import redisService from './services/redisService.js';
+import PDFService from './services/pdfService.js';
 import os from 'os';
 
 dotenv.config();
@@ -604,6 +605,75 @@ app.post('/api/interactions', async (req, res) => {
   } catch (error) {
     console.error('Erro ao criar interação:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota para exportar leads em PDF
+app.get('/api/leads/export/pdf', async (req, res) => {
+  try {
+    const { filterType = 'all', status } = req.query;
+    
+    // Buscar todos os leads com suas interações
+    const leadsResult = await pool.query(`
+      SELECT 
+        l.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', i.id,
+              'type', i.tipo,
+              'content', i.conteudo,
+              'created_at', i.data_criacao,
+              'user', i.usuario_criacao
+            )
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '[]'::json
+        ) as interactions
+      FROM leads l
+      LEFT JOIN interactions i ON l.id = i.lead_id
+      GROUP BY l.id
+      ORDER BY l.data_criacao DESC
+    `);
+    
+    // Mapear campos do banco para o formato esperado
+    const leads = leadsResult.rows.map(lead => ({
+      id: lead.id,
+      name: lead.nome,
+      email: lead.email,
+      phone: lead.telefone,
+      company: lead.empresa,
+      position: lead.cargo,
+      source: lead.fonte,
+      status: lead.status,
+      value: lead.valor_contrato,
+      notes: lead.observacoes,
+      address: lead.endereco,
+      city: lead.cidade,
+      state: lead.estado,
+      zip_code: lead.cep,
+      created_at: lead.data_criacao,
+      updated_at: lead.data_atualizacao,
+      interactions: lead.interactions
+    }));
+    
+    // Gerar PDF
+    const pdfService = new PDFService();
+    const pdfBuffer = await pdfService.generateLeadsPDF(leads, filterType, status);
+    
+    // Configurar headers para download
+    const filename = filterType === 'status' && status 
+      ? `leads_status_${status}_${new Date().toISOString().split('T')[0]}.pdf`
+      : `leads_completo_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Erro ao exportar PDF:', error);
+    res.status(500).json({ error: 'Erro interno do servidor ao gerar PDF' });
   }
 });
 

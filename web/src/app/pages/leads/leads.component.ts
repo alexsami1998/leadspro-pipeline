@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { LeadService } from '../../services/lead.service';
 import { AuthService } from '../../services/auth.service';
 import { Lead, LeadStatus, LeadSource, Interaction, InteractionType, LeadProduct, ProductName } from '../../models/lead.model';
+import { PdfExportComponent } from '../../components/pdf-export/pdf-export.component';
 
 @Component({
   selector: 'app-leads',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PdfExportComponent],
   templateUrl: './leads.component.html',
   styleUrls: ['./leads.component.scss']
 })
@@ -19,6 +20,7 @@ export class LeadsComponent implements OnInit {
   showCreateModal = false;
   showEditModal = false;
   showInteractionModal = false;
+  showPdfExportModal = false;
   loading = true;
   activeTab = 'details';
   leadInteractions: Interaction[] = [];
@@ -647,6 +649,20 @@ export class LeadsComponent implements OnInit {
     } finally {
       this.uploadingMedia = false;
     }
+  }
+
+  // Métodos para exportação PDF
+  openPdfExportModal(): void {
+    this.showPdfExportModal = true;
+  }
+
+  closePdfExportModal(): void {
+    this.showPdfExportModal = false;
+  }
+
+  onPdfExportSuccess(): void {
+    this.closePdfExportModal();
+    // Opcional: mostrar mensagem de sucesso
   }
 }
 
