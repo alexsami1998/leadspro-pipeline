@@ -20,7 +20,7 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copiar arquivos buildados
-COPY --from=build /app/dist/leadpro-web /usr/share/nginx/html
+COPY --from=build /app/dist/leadpro-web/browser /usr/share/nginx/html
 
 # Copiar configuração customizada do nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
