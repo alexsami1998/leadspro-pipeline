@@ -1,5 +1,5 @@
 # Dockerfile para Backend LeadPro
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Definir diretório de trabalho
 WORKDIR /app
