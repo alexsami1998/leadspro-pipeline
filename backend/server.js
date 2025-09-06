@@ -612,6 +612,7 @@ app.post('/api/interactions', async (req, res) => {
 app.get('/api/leads/export/pdf', async (req, res) => {
   try {
     const { filterType = 'all', status } = req.query;
+    console.log(`Requisição de exportação PDF - filterType: ${filterType}, status: ${status}`);
     
     // Buscar todos os leads com suas interações
     const leadsResult = await pool.query(`
@@ -647,16 +648,19 @@ app.get('/api/leads/export/pdf', async (req, res) => {
       status: lead.status,
       value: lead.valor_contrato,
       notes: lead.observacoes,
-      address: lead.endereco,
-      city: lead.cidade,
-      state: lead.estado,
-      zip_code: lead.cep,
+      address: lead.endereco || null,
+      city: lead.cidade || null,
+      state: lead.estado || null,
+      zip_code: lead.cep || null,
       created_at: lead.data_criacao,
       updated_at: lead.data_atualizacao,
-      interactions: lead.interactions
+      interactions: lead.interactions || []
     }));
     
+    console.log(`Mapeados ${leads.length} leads para exportação PDF`);
+    
     // Gerar PDF
+    console.log('Iniciando geração de PDF...');
     const pdfService = new PDFService();
     const pdfBuffer = await pdfService.generateLeadsPDF(leads, filterType, status);
     
@@ -664,6 +668,8 @@ app.get('/api/leads/export/pdf', async (req, res) => {
     const filename = filterType === 'status' && status 
       ? `leads_status_${status}_${new Date().toISOString().split('T')[0]}.pdf`
       : `leads_completo_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    console.log(`Enviando PDF: ${filename}, tamanho: ${pdfBuffer.length} bytes`);
     
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

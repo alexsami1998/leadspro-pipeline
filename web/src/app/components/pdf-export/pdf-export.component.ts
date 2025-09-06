@@ -329,17 +329,36 @@ export class PdfExportComponent {
     }
 
     this.isExporting = true;
+    console.log('Iniciando exportação PDF com opções:', this.exportOptions);
 
     this.pdfExportService.exportLeadsPDF(this.exportOptions).subscribe({
       next: (blob) => {
+        console.log('PDF recebido, tamanho:', blob.size, 'bytes');
         const filename = this.generateFilename();
         this.pdfExportService.downloadPDF(blob, filename);
         this.isExporting = false;
         this.export.emit(this.exportOptions);
+        alert('PDF gerado com sucesso!');
       },
       error: (error) => {
         console.error('Erro ao exportar PDF:', error);
-        alert('Erro ao gerar PDF. Tente novamente.');
+        console.error('Detalhes do erro:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url
+        });
+        
+        let errorMessage = 'Erro ao gerar PDF. ';
+        if (error.status === 0) {
+          errorMessage += 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.';
+        } else if (error.status === 500) {
+          errorMessage += 'Erro interno do servidor. Verifique os logs do backend.';
+        } else {
+          errorMessage += `Erro ${error.status}: ${error.statusText}`;
+        }
+        
+        alert(errorMessage);
         this.isExporting = false;
       }
     });

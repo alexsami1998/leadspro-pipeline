@@ -32,6 +32,9 @@ export class PdfExportService {
       params = params.set('status', options.status);
     }
 
+    console.log('Fazendo requisição para exportar PDF:', `${this.apiUrl}/leads/export/pdf`);
+    console.log('Parâmetros:', params.toString());
+
     return this.http.get(`${this.apiUrl}/leads/export/pdf`, {
       params: params,
       responseType: 'blob'

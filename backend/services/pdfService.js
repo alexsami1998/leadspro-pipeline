@@ -8,15 +8,26 @@ const __dirname = path.dirname(__filename);
 
 class PDFService {
   constructor() {
+    // Caminho correto para o logo
     this.logoPath = path.join(__dirname, '../../web/src/assets/images/logo.png');
   }
 
   async generateLeadsPDF(leads, filterType = 'all', status = null) {
     try {
-      // Configurar Puppeteer
+      console.log('Iniciando geração de PDF com', leads.length, 'leads');
+      
+      // Configurar Puppeteer com mais opções para ambientes Linux
       const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ]
       });
 
       const page = await browser.newPage();
@@ -25,15 +36,19 @@ class PDFService {
       let filteredLeads = leads;
       if (filterType === 'status' && status) {
         filteredLeads = leads.filter(lead => lead.status === status);
+        console.log(`Filtrados ${filteredLeads.length} leads com status: ${status}`);
       }
 
       // Gerar HTML para o PDF
+      console.log('Gerando HTML para PDF...');
       const html = this.generateHTML(filteredLeads, filterType, status);
 
       // Configurar conteúdo
+      console.log('Configurando conteúdo da página...');
       await page.setContent(html, { waitUntil: 'networkidle0' });
 
       // Gerar PDF
+      console.log('Gerando PDF...');
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
@@ -45,6 +60,7 @@ class PDFService {
         }
       });
 
+      console.log('PDF gerado com sucesso, tamanho:', pdfBuffer.length, 'bytes');
       await browser.close();
 
       return pdfBuffer;
@@ -342,15 +358,21 @@ class PDFService {
 
   getLogoBase64() {
     try {
+      console.log('Tentando carregar logo de:', this.logoPath);
+      
       if (fs.existsSync(this.logoPath)) {
         const logoBuffer = fs.readFileSync(this.logoPath);
+        console.log('Logo carregado com sucesso, tamanho:', logoBuffer.length, 'bytes');
         return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      } else {
+        console.log('Logo não encontrado no caminho:', this.logoPath);
       }
     } catch (error) {
       console.error('Erro ao carregar logo:', error);
     }
     
     // Logo padrão em base64 se não encontrar o arquivo
+    console.log('Usando logo padrão SVG');
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMjAwIDUwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNTAiIGZpbGw9IiMwMDdiZmYiLz48dGV4dCB4PSIxMDAiIHk9IjMwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCI+TGVhZFBybzwvdGV4dD48L3N2Zz4=';
   }
 }
